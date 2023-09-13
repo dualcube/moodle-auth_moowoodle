@@ -17,15 +17,15 @@ require_once($CFG->dirroot."/lib/enrollib.php");
 require_once("lib.php");
 
 $SESSION->wantsurl = $CFG->wwwroot.'/';
-$secret_key = get_config('auth_moowoodleconnect','encryptkey');
-$request_url = get_config('auth_moowoodleconnect','wpsiteurl');
+$secret_key = get_config('auth_moowoodle_moodle_connector','encryptkey');
+$request_url = get_config('auth_moowoodle_moodle_connector','wpsiteurl');
 
 
 
-// if (get_config('auth_moowoodleconnect', 'moowoodle_license_key_activated') == 1) {
+// if (get_config('auth_moowoodle_moodle_connector', 'moowoodle_license_key_activated') == 1) {
 
 $getdata = optional_param('passkey', '', PARAM_RAW);
-$timelimit = (integer) get_config('auth_moowoodleconnect', 'timelimit');
+$timelimit = (integer) get_config('auth_moowoodle_moodle_connector', 'timelimit');
 	if ($timelimit <= 0) {
 		 $timelimit = 5; 
 	}
@@ -71,7 +71,7 @@ if(!empty($getdata)){
 			curl_setopt( $curl, CURLOPT_POST, 1 );
 	        curl_setopt( $curl, CURLOPT_POSTFIELDS, $encoded_request_data );
 	        $response = json_decode(curl_exec( $curl ),true);
-			$sskey = get_config('auth_moowoodleconnect', 'encryptkey');
+			$sskey = get_config('auth_moowoodle_moodle_connector', 'encryptkey');
 	        if($response['status'] == 'success'){
 	        	if($response['moowoodle_one_time_code'] == $getdata && $response['sskey'] == md5($sskey)){
 	        		$authplugin = get_auth_plugin('moowoodleconnect'); 
