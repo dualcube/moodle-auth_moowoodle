@@ -87,7 +87,7 @@ class auth_moowoodle_moodle_connector_admin_settingspage_tabs extends admin_sett
                 'displayname' => $tab->visiblename,
                 'html' => $tab->output_html(),
                 'active' => $active,
-                'customclass' => 'moowoodle_moodle_connectortab'
+                'customclass' => 'moowoodle_moodle_connector_tab'
             );
         }
 
