@@ -11,5 +11,5 @@ $plugin->version = 2024013100; // The current plugin version (Date: YYYYMMDDXX)
 $plugin->requires = 2018050800; // Requires this Moodle version
 $plugin->component = 'auth_moowoodle_moodle_connector';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '1.0.4 (Build: 2024013100)';
+$plugin->release = '1.0.2 (Build: 2024013100)';
 ?>
