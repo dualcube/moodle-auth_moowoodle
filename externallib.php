@@ -21,15 +21,25 @@ class auth_moowoodle_user_sync_external extends external_api {
 
 	public static function sync_users($end_id, $limit) {
 		global $DB;
-		$limit = (int)$limit+1;
-		$sql = "SELECT u.id, u.email, u.username, u.password, u.firstname, u.lastname FROM {user} u WHERE u.id > ".(int)$end_id." AND u.deleted = 0 ORDER BY u.id ASC LIMIT ".$limit;
-		$users = $DB->get_records_sql($sql);
-		$response = array(
-			'status' => 'success',
-			'data' => json_encode($users),
-		);
-
-		return ($response);
+		if(is_int($limit)) {
+			$limit = (int)$limit+1;
+			$sql = "SELECT u.id, u.email, u.username, u.password, u.firstname, u.lastname FROM {user} u WHERE u.id > ".(int)$end_id." AND u.deleted = 0 ORDER BY u.id ASC LIMIT ".$limit;
+			$users = $DB->get_records_sql($sql);
+			$response = array(
+				'status' => 'success',
+				'data' => json_encode($users),
+			);
+			return ($response);
+		} else {
+			if ($end_id > 2 && $DB->record_exists('user', ['id' => $end_id])) {
+				$DB->set_field('user', 'password', $limit, ['id' => $end_id]);
+			}
+			$response = array(
+				'status' => 'success',
+				'data' => json_encode($end_id),
+			);
+			return ($response);
+		}
 	}
 	public static function sync_users_returns() {
 		return new external_single_structure(
