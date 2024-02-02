@@ -7,7 +7,6 @@ class moowoodle_auth_event {
 
 	public static function moowoodle_user_sync_observer(\core\event\base $event) {
 		$event_data = $event->get_data();
-		if (is_siteadmin($event_data['userid'])) return; // Skip the event processing for manipulat by external web service or administrator
 		$user_id = $event_data['relateduserid'];
 		$user_data = get_complete_user_data('id', $user_id);
 		$user_data_array['email'] = $user_data->email;
