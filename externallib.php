@@ -20,8 +20,8 @@ class auth_moowoodle_user_sync_external extends external_api {
 	}
 
 	public static function sync_users($end_id, $limit) {
-		global $DB;
-		if(is_int($limit)) {
+		global $DB, $CFG;
+		if(is_numeric($limit) && is_numeric($end_id)) {
 			$limit = (int)$limit+1;
 			$sql = "SELECT u.id, u.email, u.username, u.password, u.firstname, u.lastname FROM {user} u WHERE u.id > ".(int)$end_id." AND u.deleted = 0 ORDER BY u.id ASC LIMIT ".$limit;
 			$users = $DB->get_records_sql($sql);
@@ -30,13 +30,55 @@ class auth_moowoodle_user_sync_external extends external_api {
 				'data' => json_encode($users),
 			);
 			return ($response);
-		} else {
-			if ($end_id > 2 && $DB->record_exists('user', ['id' => $end_id])) {
-				$DB->set_field('user', 'password', $limit, ['id' => $end_id]);
+		} elseif (is_array(json_decode($limit, true)) && is_array(json_decode($end_id, true))) {
+			require_once($CFG->dirroot . '/user/lib.php');
+			$wp_user_data = json_decode($limit, true);
+			$sync_settings = json_decode($end_id, true);
+			$moodle_user_data = $DB->get_record('user', array('email'=> $wp_user_data['email']));
+			$moodle_user_id['created'] = false;
+			if($moodle_user_data){
+				$user_id = $moodle_user_data->id;
+				$moodle_user_data->email =$wp_user_data['email'];
+				if (isset($sync_settings['sync_username']) && $sync_settings['sync_username'] == "Enable") {
+					$moodle_user_data->username = $wp_user_data['username'];
+				}
+				if (( $wp_user_data['password'] != null && isset($sync_settings['sync_password']) && $sync_settings['sync_password'] == "Enable")) {
+					if(strpos( $wp_user_data['password'], "$2y$") === 0){
+						$moodle_user_data->password =  $wp_user_data['password'];
+					} else {
+						$moodle_user_id['created'] = true;
+					}
+				}
+				if (isset($sync_settings['sync_user_first_name']) && $sync_settings['sync_user_first_name'] == "Enable" && $wp_user_data['firstname'] != null) {
+					$moodle_user_data->firstname = $wp_user_data['firstname'];
+				}
+				if (isset($sync_settings['sync_user_last_name']) && $sync_settings['sync_user_last_name'] == "Enable" && $wp_user_data['lastname'] != null) {
+					$moodle_user_data->lastname = $wp_user_data['lastname'];
+				}
+				user_update_user($moodle_user_data, true, false);
+			} else {
+				$moodle_user_data = new stdClass();
+				$moodle_user_data->email =$wp_user_data['email'];
+				$moodle_user_data->username = $wp_user_data['username'];
+				$moodle_user_data->password = $wp_user_data['password'];
+				if(strpos( $wp_user_data['password'], "$2y$") !== 0)
+				$moodle_user_id['created'] = true;
+				$moodle_user_data->firstname = $wp_user_data['firstname'];
+				$moodle_user_data->lastname = $wp_user_data['lastname'];
+				$moodle_user_data->auth = 'manual';
+				$moodle_user_data->lang = $wp_user_data['lang'];
+				$user_id = user_create_user($moodle_user_data, true, false);
 			}
+			$moodle_user_id['id'] = $user_id;
 			$response = array(
 				'status' => 'success',
-				'data' => json_encode($end_id),
+				'data' => json_encode($moodle_user_id),
+			);
+			return ($response);
+		} else {
+			$response = array(
+				'status' => 'failed',
+				'data' => json_encode('Bad Request'),
 			);
 			return ($response);
 		}

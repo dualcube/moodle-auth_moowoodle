@@ -67,8 +67,6 @@ if (!empty($getdata)) {
 				CURLOPT_POST => true,
 				CURLOPT_POSTFIELDS => array('moowoodle_token' => base64_encode($jeson_request_data)),
 			));
-			curl_setopt( $curl, CURLOPT_POST, 1 );
-	        curl_setopt( $curl, CURLOPT_POSTFIELDS, $encoded_request_data );
 			$response = json_decode(curl_exec($curl), true);
 			if ($response != null) {
 				$sskey = get_config('auth_moowoodle_moodle_connector', 'encryptkey');
