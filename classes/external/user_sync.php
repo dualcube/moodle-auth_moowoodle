@@ -1,16 +1,21 @@
 <?php
 /**
  *
- * @package    auth_moowoodle_user_sync
+ * @package    auth_moowoodle_moodle_connector
  * @author     DualCube <admin@dualcube.com>
  * @copyright  2023 DualCube Team(https://dualcube.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+namespace auth_moowoodle_moodle_connector\external;
+
 defined('MOODLE_INTERNAL') || die();
-require_once "$CFG->libdir/externallib.php";
-require_once "$CFG->libdir/enrollib.php";
-class auth_moowoodle_user_sync_external extends external_api {
-	public static function sync_users_parameters() {
+
+use core_external\external_api;
+use core_external\external_function_parameters;
+use core_external\external_single_structure;
+use core_external\external_value;
+class user_sync extends external_api {
+	public static function execute_parameters(): external_function_parameters {
 		return new external_function_parameters(
 			array(
 				'end_id' => new external_value(PARAM_RAW, 'The Last id to send next batch of user data'),
@@ -19,7 +24,7 @@ class auth_moowoodle_user_sync_external extends external_api {
 		);
 	}
 
-	public static function sync_users($end_id, $limit) {
+	public static function execute($end_id, $limit) {
 		global $DB, $CFG;
 		if(is_numeric($limit) && is_numeric($end_id)) {
 			$limit = (int)$limit+1;
@@ -83,7 +88,7 @@ class auth_moowoodle_user_sync_external extends external_api {
 			return ($response);
 		}
 	}
-	public static function sync_users_returns() {
+	public static function execute_returns(): external_single_structure {
 		return new external_single_structure(
 			array(
 				'status' => new external_value(PARAM_RAW, 'status: success if success'),

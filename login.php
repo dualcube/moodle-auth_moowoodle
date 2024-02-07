@@ -9,12 +9,7 @@
 global $CFG, $USER, $SESSION, $DB;
 
 require '../../config.php';
-require_once $CFG->libdir . '/moodlelib.php';
-require_once $CFG->dirroot . '/cohort/lib.php';
-require_once $CFG->dirroot . '/group/lib.php';
-require_once $CFG->dirroot . '/course/lib.php';
-require_once $CFG->dirroot . "/lib/enrollib.php";
-
+require_sesskey();
 $SESSION->wantsurl = $CFG->wwwroot . '/';
 $secret_key = get_config('auth_moowoodle_moodle_connector', 'encryptkey');
 $request_url = get_config('auth_moowoodle_moodle_connector', 'wpsiteurl');

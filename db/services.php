@@ -16,7 +16,7 @@
 
 /**
  *
- * @package     auth_moowoodle_user_sync
+ * @package     auth_moowoodle_moodle_connector
  * @author      DualCube <admin@dualcube.com>
  * @copyright   Dualcube (https://dualcube.com)
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -24,12 +24,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $functions = array(
-	'auth_moowoodle_user_sync_get_all_users_data' => array(
-		'classname' => 'auth_moowoodle_user_sync_external',
-		'methodname' => 'sync_users',
-		'classpath' => 'auth/moowoodle_moodle_connector/externallib.php',
+	'auth_moowoodle_moodle_connector_user_sync' => array(
+		'classname' => 'auth_moowoodle_moodle_connector\external\user_sync',
 		'description' => 'Sync user data with WordPress or external source',
 		'type' => 'write',
-		'capabilities' => 'moodle/user:create',
+		'capabilities' => 'moodle/user:create,moodle/user:update',
 	),
 );
