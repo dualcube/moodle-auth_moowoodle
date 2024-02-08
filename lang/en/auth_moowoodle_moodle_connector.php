@@ -16,3 +16,4 @@ $string['message2'] = 'For ex: http://your_wordpress_url/';
 $string['timelimit'] = 'Set the time limit';
 $string['message3'] = 'Define the duration in minutes for which the login link from the WordPress site remains active for Moodle site login.';
 $string['moowoodle_settings'] = 'MooWoodle Connect Settings';
+$string['privacy:metadata'] = 'The MooWoodle-based WordPress-authentication plugin does not store any personal data.';
