@@ -13,7 +13,6 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
 /**
  *
  * @package     auth_moowoodle_moodle_connector
@@ -22,12 +21,11 @@
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die();
-
-$functions = array(
-	'auth_moowoodle_moodle_connector_user_sync' => array(
-		'classname' => 'auth_moowoodle_moodle_connector\external\user_sync',
-		'description' => 'Sync user data with WordPress or external source',
-		'type' => 'write',
-		'capabilities' => 'moodle/user:create,moodle/user:update',
-	),
-);
+$functions = [
+    'auth_moowoodle_moodle_connector_user_sync' => [
+        'classname' => 'auth_moowoodle_moodle_connector\external\user_sync',
+        'description' => 'Sync user data with WordPress or external source',
+        'type' => 'write',
+        'capabilities' => 'moodle/user:create,moodle/user:update',
+    ],
+];
