@@ -26,10 +26,6 @@ class moowoodle_auth_event {
 
     public static function moowoodle_user_sync_observer(\core\event\base $event) {
         $eventdata = $event->get_data();
-        if (is_siteadmin($eventdata['userid'])) {
-            return;
-        }
-        // Skip the event processing for manipulat by external web service or administrator.
         $userid = $eventdata['relateduserid'];
         $userdata = get_complete_user_data('id', $userid);
         $userdataarray['email'] = $userdata->email;
@@ -63,8 +59,6 @@ class moowoodle_auth_event {
         }
 
         curl_close($curl);
-
-        $decodedresponse = json_decode($response, true);
     }
 
 }

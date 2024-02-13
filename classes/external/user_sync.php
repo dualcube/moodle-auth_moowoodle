@@ -21,11 +21,11 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 namespace auth_moowoodle_moodle_connector\external;
-
-use core_external\external_api;
-use core_external\external_function_parameters;
-use core_external\external_single_structure;
-use core_external\external_value;
+require_once("{$CFG->libdir}/externallib.php");// support for previous version of moodle 4.2
+use external_api;// use core_external\external_api;
+use external_function_parameters;// use core_external\external_function_parameters;
+use external_single_structure;// use core_external\external_single_structure;
+use external_value;// use core_external\external_value;
 
 class user_sync extends external_api {
     public static function execute_parameters(): external_function_parameters {

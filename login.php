@@ -32,7 +32,7 @@ if ($timelimit <= 0) {
     $timelimit = 5;
 }
 if (!empty($getdata)) {
-    $data = json_decode(convert_uudecode($getdata), true);
+    $data = json_decode(base64_decode($getdata), true);
     $userid = $data['user_id'];
     $timestamp = $data['timestamp'];
     $redirecturl = $data['redirect_url'];
