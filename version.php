@@ -21,8 +21,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die();
-$plugin->version = 20240020700;
+$plugin->version = 20240021300;
 $plugin->requires = 2018050800;
 $plugin->component = 'auth_moowoodle_moodle_connector';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '1.0.2 (Build: 20240020700)';
+$plugin->release = '1.0.2 (Build: 20240021300)';

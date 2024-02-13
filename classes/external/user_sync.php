@@ -49,7 +49,7 @@ class user_sync extends external_api {
             $param = [
                 'endid' => (int) $endid,
                 'limit' => $limit,
-            ]
+            ];
             $users = $DB->get_records_sql($sql, $param);
             $response = [
                 'status' => 'success',

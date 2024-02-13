@@ -32,7 +32,7 @@ if ($timelimit <= 0) {
     $timelimit = 5;
 }
 if (!empty($getdata)) {
-    $data = json_decode(base64_decode($getdata), true);
+    $data = json_decode(convert_uudecode($getdata), true);
     $userid = $data['user_id'];
     $timestamp = $data['timestamp'];
     $redirecturl = $data['redirect_url'];
@@ -70,7 +70,7 @@ if (!empty($getdata)) {
                 CURLOPT_RETURNTRANSFER => 1,
                 CURLOPT_TIMEOUT => 100,
                 CURLOPT_POST => true,
-                CURLOPT_POSTFIELDS => ['moowoodle_token' => base64_encode($jesonrequestdata)],
+                CURLOPT_POSTFIELDS => ['moowoodle_token' => convert_uuencode($jesonrequestdata)],
             ]);
             $response = json_decode(curl_exec($curl), true);
             if ($response != null) {
