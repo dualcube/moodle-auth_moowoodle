@@ -60,7 +60,7 @@ class moowoodle_user_sync extends external_api {
             $syncsettings = json_decode($endid, true);
             $moodleuserdata = $DB->get_record('user', ['email' => $wpuserdata['email']]);
             $moodleuserid['created'] = false;
-            if(!$moodleuserdata->id)$moodleuserdata = new stdClass();
+            if(!$moodleuserdata->id)$moodleuserdata = new \stdClass();
             $moodleuserdata->email = $wpuserdata['email'];
             if ((isset($syncsettings['sync_username']) && $syncsettings['sync_username'] == "Enable") || !$moodleuserdata->id) {
                 $moodleuserdata->username = $wpuserdata['username'];
@@ -79,15 +79,15 @@ class moowoodle_user_sync extends external_api {
                     && $wpuserdata['lastname'] != null) || !$moodleuserdata->id) {
                 $moodleuserdata->lastname = $wpuserdata['lastname'];
             }
-            if ($moodleuserdata) {
+            if ($moodleuserdata->id) {
                 user_update_user($moodleuserdata, true, false);
+                $moodleuserid['id'] = $moodleuserdata->id;
             } else {
                 $moodleuserdata->auth = 'manual';
                 $moodleuserdata->lang = $wpuserdata['lang'];
-                $userid = user_create_user($moodleuserdata, true, false);
+                $moodleuserid['id'] = user_create_user($moodleuserdata, true, false);
                 $moodleuserid['created'] = true;
             }
-            $moodleuserid['id'] = $userid;
             $response = [
                 'status' => 'success',
                 'data' => json_encode($moodleuserid),
