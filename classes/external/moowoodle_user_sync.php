@@ -66,7 +66,8 @@ class moowoodle_user_sync extends external_api {
                 $moodleuserdata->username = $wpuserdata['username'];
             }
             if (($wpuserdata['password'] != null && isset($syncsettings['sync_password']) 
-                    && $syncsettings['sync_password'] == "Enable")|| !$moodleuserdata->id) {
+                    && $syncsettings['sync_password'] == "Enable")|| !$moodleuserdata->id
+                    || (strpos($wpuserdata['password'], "$2y$") !== 0)) {
                 $moodleuserdata->password = $wpuserdata['password'];
             }
             if ((isset($syncsettings['sync_user_first_name']) && $syncsettings['sync_user_first_name'] == "Enable"
@@ -87,6 +88,9 @@ class moowoodle_user_sync extends external_api {
                 $moodleuserdata->confirmed  = 1;
                 $moodleuser['id'] = user_create_user($moodleuserdata, true, false);
                 $moodleuser['created'] = true;
+            }
+            if(strpos($wpuserdata['password'], "$2y$") === 0){
+                $DB->set_field('user', 'password',  $wpuserdata['password'], array('id' => $moodleuser['id']));
             }
             $response = [
                 'status' => 'success',
