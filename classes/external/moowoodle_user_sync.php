@@ -44,15 +44,13 @@ class moowoodle_user_sync extends external_api {
             $sql = "SELECT u.id, u.email, u.username, u.password, u.firstname, u.lastname
                       FROM {user} u
                      WHERE u.id > :endid AND u.deleted = 0
-                  ORDER BY u.id ASC
-                     LIMIT :limit";
+                  ORDER BY u.id ASC";
             $param = [
                 'endid' => (int) $endid,
-                'limit' => $limit,
             ];
             $response = [
                 'status' => 'success',
-                'data' => json_encode($DB->get_records_sql($sql, $param)),
+                'data' => json_encode($DB->get_records_sql($sql, $param, 0, $limit)),
             ];
         } else if (is_array(json_decode($limit, true)) && is_array(json_decode($endid, true))) {
             require_once($CFG->dirroot . '/user/lib.php');
@@ -66,8 +64,8 @@ class moowoodle_user_sync extends external_api {
                 $moodleuserdata->username = $wpuserdata['username'];
             }
             if (($wpuserdata['password'] != null && isset($syncsettings['sync_password']) 
-                    && $syncsettings['sync_password'] == "Enable")|| !$moodleuserdata->id
-                    || (strpos($wpuserdata['password'], "$2y$") !== 0)) {
+                    && $syncsettings['sync_password'] == "Enable" && strpos($wpuserdata['password'], "$2y$") !== 0)
+                    || !$moodleuserdata->id ) {
                 $moodleuserdata->password = $wpuserdata['password'];
             }
             if ((isset($syncsettings['sync_user_first_name']) && $syncsettings['sync_user_first_name'] == "Enable"

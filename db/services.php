@@ -24,6 +24,8 @@ defined('MOODLE_INTERNAL') || die();
 $functions = [
     'auth_moowoodle_user_sync' => [
         'classname' => 'auth_moowoodle\external\moowoodle_user_sync',
+        'methodname' => 'execute',
+        'classpath' => 'auth/moowoodle/classes/external/moowoodle_user_sync.php',
         'description' => 'Sync user data with WordPress or external source',
         'type' => 'write',
         'capabilities' => 'moodle/user:create,moodle/user:update',
