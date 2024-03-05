@@ -44,32 +44,29 @@ class moowoodle_user_sync extends external_api {
             $sql = "SELECT u.id, u.email, u.username, u.password, u.firstname, u.lastname
                       FROM {user} u
                      WHERE u.id > :endid AND u.deleted = 0
-                  ORDER BY u.id ASC
-                     LIMIT :limit";
+                  ORDER BY u.id ASC";
             $param = [
                 'endid' => (int) $endid,
-                'limit' => $limit,
             ];
             $response = [
                 'status' => 'success',
-                'data' => json_encode($DB->get_records_sql($sql, $param)),
+                'data' => json_encode($DB->get_records_sql($sql, $param, 0, $limit)),
             ];
         } else if (is_array(json_decode($limit, true)) && is_array(json_decode($endid, true))) {
             require_once($CFG->dirroot . '/user/lib.php');
             $wpuserdata = json_decode($limit, true);
             $syncsettings = json_decode($endid, true);
             $moodleuserdata = $DB->get_record('user', ['email' => $wpuserdata['email']]);
-            $moodleuserid['created'] = false;
-            if(!$moodleuserdata->id)$moodleuserdata = new stdClass();
+            $moodleuser['created'] = false;
+            if(!$moodleuserdata)$moodleuserdata = new \stdClass();
             $moodleuserdata->email = $wpuserdata['email'];
             if ((isset($syncsettings['sync_username']) && $syncsettings['sync_username'] == "Enable") || !$moodleuserdata->id) {
                 $moodleuserdata->username = $wpuserdata['username'];
             }
             if (($wpuserdata['password'] != null && isset($syncsettings['sync_password']) 
-                    && $syncsettings['sync_password'] == "Enable")|| !$moodleuserdata->id) {
-                if (strpos($wpuserdata['password'], "$2y$") === 0) {
-                    $moodleuserdata->password = $wpuserdata['password'];
-                }
+                    && $syncsettings['sync_password'] == "Enable" && strpos($wpuserdata['password'], "$2y$") !== 0)
+                    || !$moodleuserdata->id ) {
+                $moodleuserdata->password = $wpuserdata['password'];
             }
             if ((isset($syncsettings['sync_user_first_name']) && $syncsettings['sync_user_first_name'] == "Enable"
                     && $wpuserdata['firstname'] != null) || !$moodleuserdata->id) {
@@ -79,18 +76,23 @@ class moowoodle_user_sync extends external_api {
                     && $wpuserdata['lastname'] != null) || !$moodleuserdata->id) {
                 $moodleuserdata->lastname = $wpuserdata['lastname'];
             }
-            if ($moodleuserdata) {
+            if (isset($moodleuserdata->id)) {
                 user_update_user($moodleuserdata, true, false);
+                $moodleuser['id'] = $moodleuserdata->id;
             } else {
                 $moodleuserdata->auth = 'manual';
                 $moodleuserdata->lang = $wpuserdata['lang'];
-                $userid = user_create_user($moodleuserdata, true, false);
-                $moodleuserid['created'] = true;
+                $moodleuserdata->mnethostid  = 1;
+                $moodleuserdata->confirmed  = 1;
+                $moodleuser['id'] = user_create_user($moodleuserdata, true, false);
+                $moodleuser['created'] = true;
             }
-            $moodleuserid['id'] = $userid;
+            if(strpos($wpuserdata['password'], "$2y$") === 0){
+                $DB->set_field('user', 'password',  $wpuserdata['password'], array('id' => $moodleuser['id']));
+            }
             $response = [
                 'status' => 'success',
-                'data' => json_encode($moodleuserid),
+                'data' => json_encode($moodleuser),
             ];
         } else {
             $response = [
