@@ -31,7 +31,8 @@ if ($ADMIN->fulltree) {
             ),
             get_string(
                 'moowoodle_plugin_message',
-                'auth_moowoodle'
+                'auth_moowoodle',
+                'auth'
             ),
             '',
             PARAM_RAW
@@ -46,7 +47,8 @@ if ($ADMIN->fulltree) {
             ),
             get_string(
                 'wpsiteurl_message',
-                'auth_moowoodle'
+                'auth_moowoodle',
+                'auth'
             ),
             '',
             PARAM_RAW
@@ -61,7 +63,8 @@ if ($ADMIN->fulltree) {
             ),
             get_string(
                 'timelimit_message',
-                'auth_moowoodle'
+                'auth_moowoodle',
+                'auth'
             ),
             '5',
             PARAM_INT
