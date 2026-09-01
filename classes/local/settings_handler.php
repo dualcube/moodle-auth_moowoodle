@@ -72,7 +72,7 @@ class settings_handler {
     public static function get_requirement_checks(): array {
         global $CFG;
 
-        $protocols = !empty($CFG->webserviceprotocols) ? explode(',', $CFG->webserviceprotocols) : [];
+        $protocols = array_filter(explode(',', (string) $CFG->webserviceprotocols));
 
         return [
             [
@@ -162,7 +162,7 @@ class settings_handler {
     public static function get_summary(): array {
         global $CFG, $DB;
 
-        $protocols = !empty($CFG->webserviceprotocols) ? explode(',', $CFG->webserviceprotocols) : [];
+        $protocols = array_filter(explode(',', (string) $CFG->webserviceprotocols));
 
         $service = self::get_existing_service();
         $token = $service ? self::get_any_token_for_service((int) $service->id) : false;
@@ -354,20 +354,18 @@ class settings_handler {
     public static function save_general_settings(\stdClass $data): void {
         global $CFG;
 
-        set_config('enablewebservices', !empty($data->enablewebservices) ? 1 : 0);
+        set_config('enablewebservices', (int) !empty($data->enablewebservices));
 
-        $protocols = !empty($CFG->webserviceprotocols) ? explode(',', $CFG->webserviceprotocols) : [];
-        $protocols = array_filter($protocols, static function ($protocol) {
-            return $protocol !== '' && $protocol !== 'rest';
-        });
+        $protocols = array_filter(explode(',', (string) $CFG->webserviceprotocols));
+        $protocols = array_diff($protocols, ['', 'rest']);
 
         if (!empty($data->restprotocol)) {
             $protocols[] = 'rest';
         }
 
         set_config('webserviceprotocols', implode(',', array_unique($protocols)));
-        set_config('passwordpolicy', !empty($data->passwordpolicy) ? 1 : 0);
-        set_config('extendedusernamechars', !empty($data->extendedusernamechars) ? 1 : 0);
+        set_config('passwordpolicy', (int) !empty($data->passwordpolicy));
+        set_config('extendedusernamechars', (int) !empty($data->extendedusernamechars));
     }
 
     /**
@@ -384,7 +382,6 @@ class settings_handler {
         global $CFG, $DB;
 
         require_once($CFG->dirroot . '/webservice/lib.php');
-        require_once($CFG->libdir . '/externallib.php');
 
         $webservicemanager = new \webservice();
 
@@ -440,7 +437,12 @@ class settings_handler {
             if ($existingtoken) {
                 $token = $existingtoken->token;
             } else {
-                $token = \external_generate_token(EXTERNAL_TOKEN_PERMANENT, $serviceid, $userid, context_system::instance());
+                $token = \core_external\util::generate_token(
+                    EXTERNAL_TOKEN_PERMANENT,
+                    \core_external\util::get_service_by_id($serviceid),
+                    $userid,
+                    context_system::instance()
+                );
             }
 
             return [

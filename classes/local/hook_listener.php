@@ -25,7 +25,6 @@
 
 namespace auth_moowoodle\local;
 
-use core\hook\after_config;
 use core\hook\output\before_standard_top_of_body_html_generation;
 
 /**
@@ -37,29 +36,13 @@ class hook_listener {
      * setup wizard. This runs on every single request, so it must return immediately
      * once the one-time flag set by db/install.php is gone.
      *
-     * @param after_config $hook
+     * Registered in db/hooks.php against \core\hook\after_config, which carries no
+     * payload to act on, so the callback takes no parameter.
      */
-    public static function after_config(after_config $hook): void {
-        global $CFG, $USER;
+    public static function after_config(): void {
+        global $USER;
 
-        // Unlike the legacy <component>_after_config() callback convention (which
-        // get_plugins_with_function() itself refuses to invoke this early), a hook
-        // registered in db/hooks.php has no such built-in guard - so these checks
-        // must run, and must come, before anything below touches the database.
-        if (
-            CLI_SCRIPT || AJAX_SCRIPT || WS_SERVER || during_initial_install()
-                || (defined('PHPUNIT_TEST') && PHPUNIT_TEST)
-                || (defined('NO_MOODLE_COOKIES') && NO_MOODLE_COOKIES)
-        ) {
-            return;
-        }
-
-        if (empty(get_config('auth_moowoodle', 'promptsetupwizard'))) {
-            return;
-        }
-
-        // Don't jump in mid-upgrade; wait until the whole site (all plugins) is up to date.
-        if (!empty($CFG->upgraderunning) || moodle_needs_upgrading()) {
+        if (self::should_skip_setup_wizard_prompt()) {
             return;
         }
 
@@ -79,6 +62,42 @@ class hook_listener {
 
         unset_config('promptsetupwizard', 'auth_moowoodle');
         redirect(new \moodle_url('/auth/moowoodle/setup_wizard.php'));
+    }
+
+    /**
+     * Whether after_config() should bail out before touching the database or redirecting.
+     *
+     * @return bool
+     */
+    private static function should_skip_setup_wizard_prompt(): bool {
+        global $CFG;
+
+        // Unlike the legacy <component>_after_config() callback convention (which
+        // get_plugins_with_function() itself refuses to invoke this early), a hook
+        // registered in db/hooks.php has no such built-in guard - so this must run,
+        // and must come, before anything below touches the database.
+        if (self::is_non_interactive_request()) {
+            return true;
+        }
+
+        if (empty(get_config('auth_moowoodle', 'promptsetupwizard'))) {
+            return true;
+        }
+
+        // Don't jump in mid-upgrade; wait until the whole site (all plugins) is up to date.
+        return !empty($CFG->upgraderunning) || moodle_needs_upgrading();
+    }
+
+    /**
+     * Whether the current request is a context this hook should never act in
+     * (CLI, AJAX, a web service call, mid-install, or a test/cookieless run).
+     *
+     * @return bool
+     */
+    private static function is_non_interactive_request(): bool {
+        return CLI_SCRIPT || AJAX_SCRIPT || WS_SERVER || during_initial_install()
+            || (defined('PHPUNIT_TEST') && PHPUNIT_TEST)
+            || (defined('NO_MOODLE_COOKIES') && NO_MOODLE_COOKIES);
     }
 
     /**
