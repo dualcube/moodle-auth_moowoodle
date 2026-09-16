@@ -28,8 +28,8 @@ $functions = [
     'auth_moowoodle_get_users' => [
         'classname'     => 'auth_moowoodle\external\get_users',
         'description'   => 'Get user data',
-        'type'          => 'write',
-        'capabilities'  => 'moodle/user:create,moodle/user:update',
+        'type'          => 'read',
+        'capabilities'  => 'auth/moowoodle:exportusers',
     ],
 
     'auth_moowoodle_user_sync' => [

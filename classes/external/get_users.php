@@ -50,6 +50,10 @@ class get_users extends external_api {
     /**
      * Get all users, batched by id, restricted to the given roles.
      *
+     * Only the profile fields the WordPress integration actually needs are
+     * selected and returned - the password hash is never part of this export,
+     * regardless of what columns a future change might add to the query.
+     *
      * @param int $endid
      * @param int $limit
      * @param string $roles Comma separated role ids.
@@ -57,6 +61,20 @@ class get_users extends external_api {
      */
     public static function execute($endid, $limit, $roles) {
         global $DB;
+
+        $params = self::validate_parameters(self::execute_parameters(), [
+            'endid' => $endid,
+            'limit' => $limit,
+            'roles' => $roles,
+        ]);
+
+        $context = \core\context\system::instance();
+        self::validate_context($context);
+        require_capability('auth/moowoodle:exportusers', $context);
+
+        $endid = $params['endid'];
+        $limit = $params['limit'];
+        $roles = $params['roles'];
 
         if (!is_numeric($limit) || !is_numeric($endid)) {
             return [
@@ -73,7 +91,7 @@ class get_users extends external_api {
 
         [$rolesql, $roleparams] = $DB->get_in_or_equal($roleids, SQL_PARAMS_NAMED, 'roleid');
 
-        $sql = "SELECT u.id, u.email, u.username, u.password, u.firstname, u.lastname
+        $sql = "SELECT u.id, u.email, u.username, u.firstname, u.lastname
                   FROM {user} u
                   JOIN {role_assignments} ra ON u.id = ra.userid
                  WHERE u.id > :endid
@@ -87,9 +105,23 @@ class get_users extends external_api {
             ? $DB->get_records_sql($sql, $sqlparams)
             : $DB->get_records_sql($sql, $sqlparams, 0, $limit);
 
+        // Explicitly allow-list the exported fields, rather than passing the
+        // DB row straight through, so nothing beyond these fields can ever
+        // leak through this endpoint.
+        $users = [];
+        foreach ($records as $record) {
+            $users[] = [
+                'id' => (int) $record->id,
+                'email' => $record->email,
+                'username' => $record->username,
+                'firstname' => $record->firstname,
+                'lastname' => $record->lastname,
+            ];
+        }
+
         return [
             'status' => 'success',
-            'data' => json_encode($records),
+            'data' => json_encode($users),
         ];
     }
 

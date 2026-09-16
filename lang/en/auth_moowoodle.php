@@ -26,6 +26,7 @@ $string['pluginname'] = 'MooWoodle Connect';
 
 // Capabilities.
 $string['moowoodle:syncusers'] = 'Synchronise Moodle users with the MooWoodle WordPress plugin';
+$string['moowoodle:exportusers'] = 'Export Moodle user profile data to the MooWoodle WordPress plugin';
 
 $string['moowoodle_plugin_message'] = 'It should be same with the wordpress plugin';
 $string['key'] = 'SSO secret Key';

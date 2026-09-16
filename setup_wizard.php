@@ -59,7 +59,7 @@ $PAGE->set_heading(get_string('setupwizard', 'auth_moowoodle'));
 // Small "Copy" button behaviour for the read-only site URL / token fields. Safe to
 // load on every step: it's a single delegated click listener, and does nothing unless
 // a ".auth-moowoodle-copy" button is actually present on the page.
-$PAGE->requires->js_call_amd('auth_moowoodle/copy_button', 'init');
+$PAGE->requires->js_call_amd('auth_moowoodle/setup_wizard', 'initCopyButtons');
 
 // Refresh the Web Service step's Token list when the service or user dropdown changes,
 // via a small JSON fetch, instead of reloading the page. No page navigation means no
@@ -67,7 +67,7 @@ $PAGE->requires->js_call_amd('auth_moowoodle/copy_button', 'init');
 // the Web Service" field's own show/hide already happens client-side via hideIf().
 if ($step === 'webservice') {
     $ajaxurl = (new moodle_url('/auth/moowoodle/wizard_ajax.php'))->out(false);
-    $PAGE->requires->js_call_amd('auth_moowoodle/webservice_step', 'init', [$ajaxurl]);
+    $PAGE->requires->js_call_amd('auth_moowoodle/setup_wizard', 'initWebserviceStep', [$ajaxurl]);
 }
 
 // Simple GET+sesskey "continue" actions (steps with nothing to submit).

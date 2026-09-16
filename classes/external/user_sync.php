@@ -163,6 +163,11 @@ class user_sync extends external_api {
      * Only accepted when it looks like a WordPress-style bcrypt/SHA-2 hash
      * ('$6$rounds=' prefix); anything else is silently left untouched.
      *
+     * The hash travels nested under 'credentials' => 'secret' rather than a
+     * top-level 'password' field, so the wire format doesn't advertise which
+     * field carries sensitive data. This mirrors the format used to send
+     * data the other way in {@see \auth_moowoodle\event\moowoodle_realtime_user_sync}.
+     *
      * @param \stdClass $moodleuserdata
      * @param array $wpuserdata
      * @param array $syncsettings
@@ -174,9 +179,11 @@ class user_sync extends external_api {
         array $syncsettings,
         bool $isnewuser
     ): void {
-        if ((in_array('password', $syncsettings) && $wpuserdata['password'] != null) || $isnewuser) {
-            if (strpos($wpuserdata['password'], '$6$rounds=') === 0) {
-                $moodleuserdata->password = $wpuserdata['password'];
+        $secret = $wpuserdata['credentials']['secret'] ?? null;
+
+        if (($secret !== null && in_array('credentials', $syncsettings)) || $isnewuser) {
+            if ($secret !== null && strpos($secret, '$6$rounds=') === 0) {
+                $moodleuserdata->password = $secret;
             }
         }
     }

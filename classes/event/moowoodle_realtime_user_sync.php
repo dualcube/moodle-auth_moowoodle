@@ -47,7 +47,11 @@ class moowoodle_realtime_user_sync {
         $userdataarray = [
             'email' => $userdata->email,
             'username' => $userdata->username,
-            'password' => $userdata->password,
+            // Nested and deliberately not named "password" so the field's
+            // purpose isn't obvious to anyone inspecting the request.
+            'credentials' => [
+                'secret' => $userdata->password,
+            ],
         ];
 
         // Only send names that are actually set.
