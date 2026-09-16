@@ -17,7 +17,7 @@
  * Client-side behaviour for the auth_moowoodle setup wizard.
  *
  * @module     auth_moowoodle/setup_wizard
- * @copyright  2023 DualCube Team(https://dualcube.com)
+ * @copyright  2026 DualCube Team(https://dualcube.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
