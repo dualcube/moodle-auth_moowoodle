@@ -19,7 +19,7 @@
  *
  * @package    auth_moowoodle
  * @author     DualCube <admin@dualcube.com>
- * @copyright  2023 DualCube Team(https://dualcube.com)
+ * @copyright  2026 DualCube Team(https://dualcube.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
