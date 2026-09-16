@@ -125,6 +125,8 @@ export const initWebserviceStep = (ajaxurl) => {
                 if (button) {
                     button.value = data.buttonlabel;
                 }
+
+                return;
             })
             .catch(() => {
                 // Leave the current token list as-is on a network error.
