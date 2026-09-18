@@ -99,35 +99,33 @@ class setup_wizard {
     }
 
     /**
-     * Build the templatedata for the step progress indicator (auth_moowoodle/progress),
-     * styled like Moodle's secondary navigation tabs (the "moremenu" component used for
-     * e.g. the admin section tabs), rather than the older tabtree() component.
+     * Build the step tabs, rendered via $OUTPUT->tabtree() so they use the same
+     * markup as the rest of Moodle's admin UI and follow the active theme.
      *
-     * @param string $currentstep
-     * @return array
+     * @return array{tabs: \tabobject[], inactive: string[]} tabs for $OUTPUT->tabtree(),
+     *         and the subset of step keys to render as inactive (not yet reachable).
      */
-    public static function get_progress_data(string $currentstep): array {
+    public static function get_tabs(): array {
         $steps = self::get_steps();
         $stepkeys = array_keys($steps);
 
         $furthest = get_config('auth_moowoodle', 'setup_progress');
         $furthestindex = $furthest ? array_search($furthest, $stepkeys, true) : -1;
 
-        $items = [];
+        $tabs = [];
+        $inactive = [];
 
         foreach ($stepkeys as $index => $key) {
-            // A step can only be jumped to once the wizard has reached it at least once.
-            $islocked = $index > $furthestindex + 1;
+            $url = new \moodle_url('/auth/moowoodle/setup_wizard.php', ['step' => $key]);
+            $tabs[] = new \tabobject($key, $url, $steps[$key]);
 
-            $items[] = [
-                'label' => $steps[$key],
-                'url' => $islocked ? null : (new \moodle_url('/auth/moowoodle/setup_wizard.php', ['step' => $key]))->out(false),
-                'active' => $key === $currentstep,
-                'disabled' => $islocked,
-            ];
+            // A step can only be jumped to once the wizard has reached it at least once.
+            if ($index > $furthestindex + 1) {
+                $inactive[] = $key;
+            }
         }
 
-        return ['items' => $items];
+        return ['tabs' => $tabs, 'inactive' => $inactive];
     }
 
     /**

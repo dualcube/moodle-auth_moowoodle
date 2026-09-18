@@ -110,7 +110,7 @@ class webservice_form extends moodleform {
                     $tokenoptions,
                     [
                         'id' => 'auth_moowoodle_token',
-                        'style' => 'min-width: 28em;',
+                        'class' => 'auth-moowoodle-token-select',
                         'data-placeholder' => get_string('webservice_selecttoken', 'auth_moowoodle'),
                     ]
                 ),

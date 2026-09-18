@@ -137,9 +137,12 @@ switch ($step) {
                 redirect(new moodle_url('/auth/moowoodle/setup_wizard.php', ['step' => setup_wizard::get_next_step($step)]));
             }
         } else {
+            // Leave both fields blank when nothing has been configured yet - neither
+            // should ever show a converted falsy value or an auto-generated value the
+            // admin didn't ask for. An existing saved value is always preserved.
             $form->set_data((object) [
-                'wpsiteurl' => get_config('auth_moowoodle', 'wpsiteurl'),
-                'encryptkey' => get_config('auth_moowoodle', 'encryptkey') ?: settings_handler::generate_secret_key(),
+                'wpsiteurl' => get_config('auth_moowoodle', 'wpsiteurl') ?: '',
+                'encryptkey' => get_config('auth_moowoodle', 'encryptkey') ?: '',
                 'timelimit' => get_config('auth_moowoodle', 'timelimit') ?: 60,
             ]);
         }
@@ -308,11 +311,22 @@ switch ($step) {
             $form->set_data((object) $defaults);
         }
 
+        // Purely informational - the two functions this plugin always needs are never
+        // shown as checkboxes above, so make it clear why they're missing from the list.
+        $requirednote = $OUTPUT->notification(
+            get_string('synchronization_requirednote_heading', 'auth_moowoodle') . html_writer::alist([
+                get_string('synchronization_requiredfunction_get_users', 'auth_moowoodle'),
+                get_string('synchronization_requiredfunction_user_sync', 'auth_moowoodle'),
+            ]),
+            'info'
+        );
+
         $content = $OUTPUT->render_from_template('auth_moowoodle/step', [
             'heading' => get_string('step_synchronization', 'auth_moowoodle'),
             'intro' => get_string('synchronization_intro', 'auth_moowoodle'),
             'notification' => $notification,
             'formhtml' => $form->render(),
+            'extra' => $requirednote,
         ]);
         break;
 
@@ -391,7 +405,8 @@ switch ($step) {
 }
 
 echo $OUTPUT->header();
-echo $OUTPUT->render_from_template('auth_moowoodle/progress', setup_wizard::get_progress_data($step));
+$tabdata = setup_wizard::get_tabs();
+echo $OUTPUT->tabtree($tabdata['tabs'], $step, $tabdata['inactive']);
 echo $OUTPUT->box_start('generalbox auth-moowoodle-setup-wizard');
 echo $content;
 echo $OUTPUT->box_end();
