@@ -23,6 +23,11 @@
  */
 
 $string['pluginname'] = 'MooWoodle Connect';
+
+// Capabilities.
+$string['moowoodle:syncusers'] = 'Synchronise Moodle users with the MooWoodle WordPress plugin';
+$string['moowoodle:exportusers'] = 'Export Moodle user profile data to the MooWoodle WordPress plugin';
+
 $string['moowoodle_plugin_message'] = 'It should be same with the wordpress plugin';
 $string['key'] = 'SSO secret Key';
 $string['wpsiteurl'] = 'Wordpress Site URL';
@@ -109,8 +114,31 @@ $string['webservice_siteurl'] = 'Site URL';
 $string['webservice_update'] = 'Update web service';
 $string['webservice_nouser'] = 'No eligible user found. The selected user needs the "moodle/webservice:createtoken" capability.';
 
-// Setup wizard: Web Service step, additional function grants.
+// Setup wizard: Synchronization step, additional function grants.
 $string['synchronization_intro'] = 'Choose which additional web service functions the MooWoodle WordPress plugin is allowed to call. The functions required by this plugin are always enabled. Only enable functions the WordPress site actually needs — each one grants real access to Moodle data. Checking a box grants that function immediately; unchecking it here does not revoke access already granted — remove a function from Site administration > Server > Web services > External services if needed.';
+$string['syncgroup_readonly'] = 'Read-only functions';
+$string['syncgroup_mutating'] = 'Data-changing functions';
+$string['syncgroup_mutating_desc'] = 'These functions let the WordPress site create, modify, or delete Moodle data. Enable only what it actually needs, one function at a time.';
+$string['syncfunc_core_webservice_get_site_info'] = 'core_webservice_get_site_info - get basic Moodle site information';
+$string['syncfunc_core_course_get_categories'] = 'core_course_get_categories - get course categories';
+$string['syncfunc_core_course_get_courses'] = 'core_course_get_courses - get courses';
+$string['syncfunc_core_course_get_courses_by_field'] = 'core_course_get_courses_by_field - get courses by field';
+$string['syncfunc_core_user_get_users'] = 'core_user_get_users - get user accounts';
+$string['syncfunc_core_cohort_get_cohorts'] = 'core_cohort_get_cohorts - get cohorts';
+$string['syncfunc_core_group_get_course_groups'] = 'core_group_get_course_groups - get course groups';
+$string['syncfunc_core_user_create_users'] = 'core_user_create_users - create new Moodle user accounts';
+$string['syncfunc_core_user_update_users'] = 'core_user_update_users - update existing Moodle user accounts';
+$string['syncfunc_core_user_delete_users'] = 'core_user_delete_users - delete Moodle user accounts (destructive)';
+$string['syncfunc_enrol_manual_enrol_users'] = 'enrol_manual_enrol_users - enrol users into courses';
+$string['syncfunc_enrol_manual_unenrol_users'] = 'enrol_manual_unenrol_users - unenrol users from courses (destructive)';
+$string['syncfunc_core_cohort_add_cohort_members'] = 'core_cohort_add_cohort_members - add users to cohorts';
+$string['syncfunc_core_cohort_delete_cohort_members'] = 'core_cohort_delete_cohort_members - remove users from cohorts (destructive)';
+$string['syncfunc_core_group_create_groups'] = 'core_group_create_groups - create course groups';
+$string['syncfunc_core_group_add_group_members'] = 'core_group_add_group_members - add users to groups';
+$string['syncfunc_core_group_delete_group_members'] = 'core_group_delete_group_members - remove users from groups (destructive)';
+$string['synchronization_requirednote_heading'] = 'Note: The following web service functions are automatically added and managed by the MooWoodle authentication plugin. They are required for user synchronization and do not need to be selected manually on this page:';
+$string['synchronization_requiredfunction_get_users'] = 'auth_moowoodle_get_users — Get user data.';
+$string['synchronization_requiredfunction_user_sync'] = 'auth_moowoodle_user_sync — Sync user data with WordPress or an external source.';
 
 // Setup wizard: Summary step.
 $string['summary_intro'] = 'Review the configuration below, then copy the connection details into the MooWoodle WordPress plugin settings.';

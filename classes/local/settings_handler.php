@@ -41,24 +41,29 @@ class settings_handler {
         'auth_moowoodle_user_sync',
     ];
 
-    /** @var string[] Additional functions the admin can optionally grant to the web service. */
-    const SYNC_FUNCTIONS = [
+    /** @var string[] Read-only optional functions the admin can grant to the web service. */
+    const READONLY_SYNC_FUNCTIONS = [
         'core_webservice_get_site_info',
         'core_course_get_categories',
         'core_course_get_courses',
         'core_course_get_courses_by_field',
         'core_user_get_users',
+        'core_cohort_get_cohorts',
+        'core_group_get_course_groups',
+    ];
+
+    /**
+     * @var string[] Data-changing optional functions the admin can grant to the web service.
+     * These are never granted automatically - each one is an explicit, individual admin choice.
+     */
+    const MUTATING_SYNC_FUNCTIONS = [
         'core_user_create_users',
         'core_user_update_users',
         'core_user_delete_users',
         'enrol_manual_enrol_users',
         'enrol_manual_unenrol_users',
-        'auth_moowoodle_get_users',
-        'auth_moowoodle_user_sync',
-        'core_cohort_get_cohorts',
         'core_cohort_add_cohort_members',
         'core_cohort_delete_cohort_members',
-        'core_group_get_course_groups',
         'core_group_create_groups',
         'core_group_add_group_members',
         'core_group_delete_group_members',
@@ -278,12 +283,12 @@ class settings_handler {
     }
 
     /**
-     * Functions the admin can optionally grant to the web service.
+     * All functions the admin can optionally grant to the web service.
      *
      * @return string[]
      */
     public static function get_selectable_sync_functions(): array {
-        return self::SYNC_FUNCTIONS;
+        return array_merge(self::READONLY_SYNC_FUNCTIONS, self::MUTATING_SYNC_FUNCTIONS);
     }
 
     /**
@@ -306,10 +311,10 @@ class settings_handler {
     /**
      * Store which optional functions are granted, and apply the change to an existing service.
      *
-     * @param string[] $functions Functions selected by the admin, from SYNC_FUNCTIONS.
+     * @param string[] $functions Functions selected by the admin, a subset of get_selectable_sync_functions().
      */
     public static function save_sync_functions(array $functions): void {
-        $functions = array_values(array_intersect(self::SYNC_FUNCTIONS, $functions));
+        $functions = array_values(array_intersect(self::get_selectable_sync_functions(), $functions));
         $functions = array_unique(array_merge(self::SERVICE_FUNCTIONS, $functions));
 
         set_config('syncfunctions', implode(',', $functions), 'auth_moowoodle');

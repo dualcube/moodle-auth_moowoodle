@@ -43,12 +43,22 @@ class moowoodle_realtime_user_sync {
      */
     public static function moowoodle_user_sync_observer(\core\event\base $event): void {
         $userdata = get_complete_user_data('id', $event->get_data()['relateduserid']);
+        $ssokey = get_config('auth_moowoodle', 'encryptkey');
 
         $userdataarray = [
             'email' => $userdata->email,
             'username' => $userdata->username,
-            'password' => $userdata->password,
         ];
+
+        // Encrypted with the same shared key as the SSO payloads (see
+        // \auth_moowoodle\local\crypto), so WordPress must decrypt it with
+        // that key to recover the password hash - it never appears in
+        // plaintext on the wire, and the field name gives no hint either.
+        $encryptedhash = \auth_moowoodle\local\crypto::encrypt(['value' => $userdata->password], $ssokey);
+
+        if ($encryptedhash !== false) {
+            $userdataarray['hash'] = $encryptedhash;
+        }
 
         // Only send names that are actually set.
         if ($userdata->firstname != null) {
@@ -59,7 +69,7 @@ class moowoodle_realtime_user_sync {
             $userdataarray['lastname'] = $userdata->lastname;
         }
 
-        $userdataarray['passkey'] = get_config('auth_moowoodle', 'encryptkey');
+        $userdataarray['passkey'] = $ssokey;
 
         $requesturl = get_config('auth_moowoodle', 'wpsiteurl') . '/?rest_route=/moowoodle/v1/user-sync';
 
