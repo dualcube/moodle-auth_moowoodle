@@ -80,7 +80,7 @@ class auth_plugin_moowoodle extends auth_plugin_base {
      * @return bool
      */
     public function can_change_password() {
-        return true;
+        return false;
     }
 
     /**
