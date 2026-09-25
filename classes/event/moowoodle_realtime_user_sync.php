@@ -42,7 +42,19 @@ class moowoodle_realtime_user_sync {
      * @return void
      */
     public static function moowoodle_user_sync_observer(\core\event\base $event): void {
+        // Nothing to do if this site isn't actually using the plugin, or hasn't been
+        // connected to a WordPress site yet - this observer otherwise runs for every
+        // Moodle user regardless of which auth method they use.
+        if (!is_enabled_auth('moowoodle') || empty(get_config('auth_moowoodle', 'wpsiteurl'))) {
+            return;
+        }
+
         $userdata = get_complete_user_data('id', $event->get_data()['relateduserid']);
+
+        if (!$userdata) {
+            return;
+        }
+
         $ssokey = get_config('auth_moowoodle', 'encryptkey');
 
         $userdataarray = [
@@ -50,14 +62,19 @@ class moowoodle_realtime_user_sync {
             'username' => $userdata->username,
         ];
 
-        // Encrypted with the same shared key as the SSO payloads (see
-        // \auth_moowoodle\local\crypto), so WordPress must decrypt it with
-        // that key to recover the password hash - it never appears in
-        // plaintext on the wire, and the field name gives no hint either.
-        $encryptedhash = \auth_moowoodle\local\crypto::encrypt(['value' => $userdata->password], $ssokey);
+        // Password synchronisation is an explicit, off-by-default opt-in (see
+        // auth_moowoodle/syncpasswords) - and even then, only for accounts that
+        // actually authenticate through this plugin, never any other auth method.
+        if ((bool) get_config('auth_moowoodle', 'syncpasswords') && $userdata->auth === 'moowoodle') {
+            // Encrypted with the same shared key as the SSO payloads (see
+            // \auth_moowoodle\local\crypto), so WordPress must decrypt it with
+            // that key to recover the password hash - it never appears in
+            // plaintext on the wire, and the field name gives no hint either.
+            $encryptedhash = \auth_moowoodle\local\crypto::encrypt(['value' => $userdata->password], $ssokey);
 
-        if ($encryptedhash !== false) {
-            $userdataarray['hash'] = $encryptedhash;
+            if ($encryptedhash !== false) {
+                $userdataarray['hash'] = $encryptedhash;
+            }
         }
 
         // Only send names that are actually set.
@@ -69,7 +86,13 @@ class moowoodle_realtime_user_sync {
             $userdataarray['lastname'] = $userdata->lastname;
         }
 
-        $userdataarray['passkey'] = $ssokey;
+        // Authenticate the request with a signature instead of sending the shared key
+        // itself - the key must never travel in the same request as data it encrypts,
+        // or anyone reading that request has both the ciphertext and the means to
+        // decrypt it. WordPress recomputes this HMAC with its own copy of the key to
+        // verify the request really came from this Moodle site.
+        ksort($userdataarray);
+        $userdataarray['signature'] = hash_hmac('sha256', http_build_query($userdataarray), $ssokey);
 
         $requesturl = get_config('auth_moowoodle', 'wpsiteurl') . '/?rest_route=/moowoodle/v1/user-sync';
 

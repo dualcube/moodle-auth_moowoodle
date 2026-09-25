@@ -51,10 +51,13 @@ class get_users extends external_api {
      * Get all users, batched by id, restricted to the given roles.
      *
      * Only the profile fields the WordPress integration actually needs are
-     * selected and returned. The password hash is encrypted with the shared
-     * auth_moowoodle/encryptkey (see \auth_moowoodle\local\crypto) before it
-     * leaves Moodle, the same way \auth_moowoodle\event\moowoodle_realtime_user_sync
-     * does it, so it never appears in plaintext on the wire.
+     * selected and returned. The password hash is only ever included when the
+     * admin has explicitly opted in via auth_moowoodle/syncpasswords, and even
+     * then only for accounts using this plugin's own auth method - and it's
+     * encrypted with the shared auth_moowoodle/encryptkey (see
+     * \auth_moowoodle\local\crypto) before it leaves Moodle, the same way
+     * \auth_moowoodle\event\moowoodle_realtime_user_sync does it, so it never
+     * appears in plaintext on the wire.
      *
      * @param int $endid
      * @param int $limit
@@ -93,7 +96,14 @@ class get_users extends external_api {
 
         [$rolesql, $roleparams] = $DB->get_in_or_equal($roleids, SQL_PARAMS_NAMED, 'roleid');
 
-        $sql = "SELECT u.id, u.email, u.username, u.password, u.firstname, u.lastname
+        $syncpasswords = (bool) get_config('auth_moowoodle', 'syncpasswords');
+
+        // Don't even read the password hash from the database unless password sync
+        // has been explicitly turned on - the auth column is only needed then too,
+        // to make sure it's never sent for an account using a different auth method.
+        $passwordcolumns = $syncpasswords ? ', u.auth, u.password' : '';
+
+        $sql = "SELECT u.id, u.email, u.username, u.firstname, u.lastname$passwordcolumns
                   FROM {user} u
                   JOIN {role_assignments} ra ON u.id = ra.userid
                  WHERE u.id > :endid
@@ -107,12 +117,11 @@ class get_users extends external_api {
             ? $DB->get_records_sql($sql, $sqlparams)
             : $DB->get_records_sql($sql, $sqlparams, 0, $limit);
 
-        $ssokey = get_config('auth_moowoodle', 'encryptkey');
+        $ssokey = $syncpasswords ? get_config('auth_moowoodle', 'encryptkey') : null;
 
         // Explicitly allow-list the exported fields, rather than passing the
         // DB row straight through, so nothing beyond these fields can ever
-        // leak through this endpoint. The password hash is encrypted rather
-        // than dropped, since WordPress still needs it to keep accounts in sync.
+        // leak through this endpoint.
         $users = [];
         foreach ($records as $record) {
             $user = [
@@ -123,10 +132,12 @@ class get_users extends external_api {
                 'lastname' => $record->lastname,
             ];
 
-            $encryptedhash = \auth_moowoodle\local\crypto::encrypt(['value' => $record->password], $ssokey);
+            if ($syncpasswords && $record->auth === 'moowoodle') {
+                $encryptedhash = \auth_moowoodle\local\crypto::encrypt(['value' => $record->password], $ssokey);
 
-            if ($encryptedhash !== false) {
-                $user['hash'] = $encryptedhash;
+                if ($encryptedhash !== false) {
+                    $user['hash'] = $encryptedhash;
+                }
             }
 
             $users[] = $user;
