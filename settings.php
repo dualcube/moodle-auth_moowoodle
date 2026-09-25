@@ -82,17 +82,6 @@ if ($ADMIN->fulltree) {
         )
     );
 
-    // Off by default - password hashes are only ever sent when an admin explicitly
-    // opts in here, and even then only for accounts using this plugin's own auth method.
-    $settings->add(
-        new admin_setting_configcheckbox(
-            'auth_moowoodle/syncpasswords',
-            get_string('syncpasswords', 'auth_moowoodle'),
-            get_string('syncpasswords_desc', 'auth_moowoodle'),
-            0
-        )
-    );
-
     // Web service / token status, kept in sync with what the setup wizard creates.
     $service = \auth_moowoodle\local\settings_handler::get_existing_service();
 

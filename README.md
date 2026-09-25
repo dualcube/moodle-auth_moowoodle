@@ -5,7 +5,6 @@ MooWoodle Connect for Moodle
 
 - [Description](#description)
 - [Features](#features)
-- [Password Synchronisation (Security Note)](#password-synchronisation-security-note)
 - [Plugin Version](#plugin-version)
 - [Required version of Moodle](#required-version-of-moodle)
 - [Free Software](#free-software)
@@ -58,29 +57,6 @@ https://dualcube.com/docs/moowoodle-set-up-guide/
   plugin requires) are granted to the WordPress integration user.
 * A reminder banner on Site administration pages, shown to anyone with the
   `moodle/site:config` capability, until the setup wizard has been completed.
-
-[(Back to top)](#table-of-contents)
-
-# Password Synchronisation (Security Note)
-
-Prefer the SSO login link for signing users in - it never needs a Moodle password to leave
-this site. Password synchronisation exists only for sites that genuinely need both systems to
-share the same credentials, and is **off by default**.
-
-If you turn on "Synchronise passwords" (`auth_moowoodle/syncpasswords`) in the plugin
-settings:
-
-* An encrypted copy of the Moodle password hash is sent to the WordPress site whenever an
-  account is created or its password changes, so it can keep the same login working there.
-* This only ever happens for accounts whose authentication method is "MooWoodle Connect" -
-  never for accounts using any other Moodle auth method (manual, LDAP, OAuth 2, etc.).
-* The hash is encrypted with the shared SSO secret key before it leaves Moodle, and the key
-  itself is never included in that same request - the request is authenticated with a
-  signature instead, so intercepting it does not also hand over the means to decrypt it.
-
-Password hashes are sensitive even when encrypted. Only enable this setting if the WordPress
-integration truly needs it, keep the shared secret key confidential, and make sure the
-connection between the two sites is trustworthy (HTTPS, and a WordPress site you control).
 
 [(Back to top)](#table-of-contents)
 
