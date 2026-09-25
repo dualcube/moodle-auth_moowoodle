@@ -51,10 +51,7 @@ class get_users extends external_api {
      * Get all users, batched by id, restricted to the given roles.
      *
      * Only the profile fields the WordPress integration actually needs are
-     * selected and returned. The password hash is encrypted with the shared
-     * auth_moowoodle/encryptkey (see \auth_moowoodle\local\crypto) before it
-     * leaves Moodle, the same way \auth_moowoodle\event\moowoodle_realtime_user_sync
-     * does it, so it never appears in plaintext on the wire.
+     * selected and returned. Password hashes are never exported.
      *
      * @param int $endid
      * @param int $limit
@@ -93,7 +90,7 @@ class get_users extends external_api {
 
         [$rolesql, $roleparams] = $DB->get_in_or_equal($roleids, SQL_PARAMS_NAMED, 'roleid');
 
-        $sql = "SELECT u.id, u.email, u.username, u.password, u.firstname, u.lastname
+        $sql = "SELECT u.id, u.email, u.username, u.firstname, u.lastname
                   FROM {user} u
                   JOIN {role_assignments} ra ON u.id = ra.userid
                  WHERE u.id > :endid
@@ -107,12 +104,9 @@ class get_users extends external_api {
             ? $DB->get_records_sql($sql, $sqlparams)
             : $DB->get_records_sql($sql, $sqlparams, 0, $limit);
 
-        $ssokey = get_config('auth_moowoodle', 'encryptkey');
-
         // Explicitly allow-list the exported fields, rather than passing the
         // DB row straight through, so nothing beyond these fields can ever
-        // leak through this endpoint. The password hash is encrypted rather
-        // than dropped, since WordPress still needs it to keep accounts in sync.
+        // leak through this endpoint. Password hashes are never exported.
         $users = [];
         foreach ($records as $record) {
             $user = [
@@ -122,12 +116,6 @@ class get_users extends external_api {
                 'firstname' => $record->firstname,
                 'lastname' => $record->lastname,
             ];
-
-            $encryptedhash = \auth_moowoodle\local\crypto::encrypt(['value' => $record->password], $ssokey);
-
-            if ($encryptedhash !== false) {
-                $user['hash'] = $encryptedhash;
-            }
 
             $users[] = $user;
         }
