@@ -198,6 +198,7 @@ class settings_handler {
             'restprotocol' => in_array('rest', $protocols, true),
             'webservices' => (bool) $CFG->enablewebservices,
             'passwordpolicy' => (bool) $CFG->passwordpolicy,
+            'authenabled' => is_enabled_auth('moowoodle'),
             'extendedusernamechars' => (bool) $CFG->extendedusernamechars,
             'webservicefunctions' => $functionsgranted,
             'capability' => $capabilityok,
@@ -371,6 +372,26 @@ class settings_handler {
         set_config('webserviceprotocols', implode(',', array_unique($protocols)));
         set_config('passwordpolicy', (int) !empty($data->passwordpolicy));
         set_config('extendedusernamechars', (int) !empty($data->extendedusernamechars));
+
+        self::set_auth_enabled(!empty($data->enableauth));
+    }
+
+    /**
+     * Enable or disable the MooWoodle authentication method site-wide.
+     *
+     * @param bool $enable
+     */
+    public static function set_auth_enabled(bool $enable): void {
+        $enabled = array_filter(explode(',', (string) get_config('core', 'auth')));
+        $enabled = array_diff($enabled, ['moowoodle']);
+
+        if ($enable) {
+            $enabled[] = 'moowoodle';
+        }
+
+        set_config('auth', implode(',', array_unique($enabled)));
+        \core\session\manager::gc();
+        \core_plugin_manager::reset_caches();
     }
 
     /**

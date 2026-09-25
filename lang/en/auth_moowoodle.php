@@ -80,6 +80,8 @@ $string['req_passwordpolicy'] = 'Password policy';
 $string['req_passwordpolicy_desc'] = 'If enabled, user passwords will be checked against the password policy configured under Site administration > Security. Leaving this off avoids conflicts with accounts created from WordPress.';
 $string['req_extendedchars'] = 'Allow extended characters in usernames';
 $string['req_extendedchars_desc'] = 'Allows usernames created from WordPress to include characters beyond the Moodle default (alphanumeric, underscore, hyphen, period, at symbol).';
+$string['req_enableauth'] = 'Enable MooWoodle authentication';
+$string['req_enableauth_desc'] = 'Enables "MooWoodle Connect" as an authentication method under Site administration > Plugins > Authentication. Single sign-on and real-time user sync only work while it is enabled. Users of this method can change their password from Moodle.';
 $string['requirement_ok'] = 'Requirement met';
 $string['requirement_missing'] = 'Requirement not met';
 $string['fixthis'] = 'Fix this';
@@ -158,6 +160,7 @@ $string['connectionok'] = 'Reachable';
 $string['checkmoredetails'] = 'Check the Wordpress Site step for details.';
 
 // SSO login endpoint errors.
+$string['ssoauthdisabled'] = 'Single sign-on is unavailable because the MooWoodle Connect authentication method is not enabled on this site.';
 $string['ssoinvalidtoken'] = 'Invalid SSO token.';
 $string['ssoencryptfailed'] = 'Unable to encrypt the SSO request.';
 $string['ssounauthorized'] = 'Unauthorized access, contact your site administrator.';

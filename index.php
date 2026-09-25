@@ -34,6 +34,10 @@ $SESSION->wantsurl = $CFG->wwwroot . '/';
 $passkey = optional_param('passkey', '', PARAM_RAW);
 
 if ($passkey) {
+    if (!is_enabled_auth('moowoodle')) {
+        throw new moodle_exception('ssoauthdisabled', 'auth_moowoodle');
+    }
+
     $ssokey = get_config('auth_moowoodle', 'encryptkey');
 
     $requestdata = \auth_moowoodle\local\crypto::decrypt($passkey, $ssokey);
