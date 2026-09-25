@@ -47,7 +47,6 @@ $string['privacy:metadata:auth_moowoodle:username'] = 'The username, sent to and
 $string['privacy:metadata:auth_moowoodle:email'] = 'The user\'s email address, sent to and received from the WordPress site to keep both accounts in sync.';
 $string['privacy:metadata:auth_moowoodle:firstname'] = 'The user\'s first name, received from the WordPress site to keep the Moodle account in sync.';
 $string['privacy:metadata:auth_moowoodle:lastname'] = 'The user\'s last name, received from the WordPress site to keep the Moodle account in sync.';
-$string['privacy:metadata:auth_moowoodle:password'] = 'A hashed password, received from the WordPress site so the same credentials work on both sites.';
 
 // Settings page.
 $string['settings_intro'] = 'Connect this site to the MooWoodle WordPress plugin. Use the setup wizard for a guided, step-by-step configuration.';
@@ -78,9 +77,11 @@ $string['req_webservices_desc'] = 'Web services must be enabled so the MooWoodle
 $string['req_restprotocol'] = 'Enable REST protocol';
 $string['req_restprotocol_desc'] = 'The MooWoodle WordPress plugin communicates using the REST web service protocol.';
 $string['req_passwordpolicy'] = 'Password policy';
-$string['req_passwordpolicy_desc'] = 'If enabled, user passwords will be checked against the password policy configured under Site administration > Security. Leaving this off avoids conflicts when WordPress supplies its own passwords.';
+$string['req_passwordpolicy_desc'] = 'If enabled, user passwords will be checked against the password policy configured under Site administration > Security. Leaving this off avoids conflicts with accounts created from WordPress.';
 $string['req_extendedchars'] = 'Allow extended characters in usernames';
 $string['req_extendedchars_desc'] = 'Allows usernames created from WordPress to include characters beyond the Moodle default (alphanumeric, underscore, hyphen, period, at symbol).';
+$string['req_enableauth'] = 'Enable MooWoodle authentication';
+$string['req_enableauth_desc'] = 'Enables "MooWoodle Connect" as an authentication method under Site administration > Plugins > Authentication. Single sign-on and real-time user sync only work while it is enabled.';
 $string['requirement_ok'] = 'Requirement met';
 $string['requirement_missing'] = 'Requirement not met';
 $string['fixthis'] = 'Fix this';
@@ -159,6 +160,7 @@ $string['connectionok'] = 'Reachable';
 $string['checkmoredetails'] = 'Check the Wordpress Site step for details.';
 
 // SSO login endpoint errors.
+$string['ssoauthdisabled'] = 'Single sign-on is unavailable because the MooWoodle Connect authentication method is not enabled on this site.';
 $string['ssoinvalidtoken'] = 'Invalid SSO token.';
 $string['ssoencryptfailed'] = 'Unable to encrypt the SSO request.';
 $string['ssounauthorized'] = 'Unauthorized access, contact your site administrator.';

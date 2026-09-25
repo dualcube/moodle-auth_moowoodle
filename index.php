@@ -34,6 +34,10 @@ $SESSION->wantsurl = $CFG->wwwroot . '/';
 $passkey = optional_param('passkey', '', PARAM_RAW);
 
 if ($passkey) {
+    if (!is_enabled_auth('moowoodle')) {
+        throw new moodle_exception('ssoauthdisabled', 'auth_moowoodle');
+    }
+
     $ssokey = get_config('auth_moowoodle', 'encryptkey');
 
     $requestdata = \auth_moowoodle\local\crypto::decrypt($passkey, $ssokey);
@@ -52,6 +56,13 @@ if ($passkey) {
 
     if ($timedif >= 0 && $timedif < get_config('auth_moowoodle', 'timelimit') * 60 && $userexist) {
         $user = get_complete_user_data('id', $requestdata['user_id']);
+
+        // Refuse the login outright for an account that can't sign in, the same way
+        // core auth plugins (e.g. auth_oauth2) do - a suspended user or one whose auth
+        // method is 'nologin' must never reach complete_user_login().
+        if (!$user || !empty($user->suspended) || $user->auth === 'nologin') {
+            throw new moodle_exception('ssounauthorized', 'auth_moowoodle');
+        }
 
         // Get wordpress request url.
         $requesturl = get_config('auth_moowoodle', 'wpsiteurl') . '/?rest_route=/moowoodle/v1/sso';

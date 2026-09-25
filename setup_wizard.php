@@ -107,6 +107,8 @@ switch ($step) {
                 'restprotocol' => in_array('rest', $protocols, true),
                 'passwordpolicy' => (bool) $CFG->passwordpolicy,
                 'extendedusernamechars' => (bool) $CFG->extendedusernamechars,
+                // Enabled by default until the wizard has been run at least once.
+                'enableauth' => get_config('auth_moowoodle', 'setup_progress') ? is_enabled_auth('moowoodle') : true,
             ]);
         }
 
@@ -351,6 +353,7 @@ switch ($step) {
                 'label' => get_string('req_extendedchars', 'auth_moowoodle'),
                 'value' => $statuscell($summary['extendedusernamechars']),
             ],
+            ['label' => get_string('req_enableauth', 'auth_moowoodle'), 'value' => $statuscell($summary['authenabled'])],
             [
                 'label' => get_string('summary_webservicefunctions', 'auth_moowoodle'),
                 'value' => $statuscell($summary['webservicefunctions']),

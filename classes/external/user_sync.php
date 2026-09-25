@@ -118,7 +118,6 @@ class user_sync extends external_api {
         $moodleuserdata->email = clean_param($wpuserdata['email'], PARAM_EMAIL);
 
         self::apply_username($moodleuserdata, $wpuserdata, $syncsettings, $isnewuser);
-        self::apply_password($moodleuserdata, $wpuserdata, $syncsettings, $isnewuser);
         self::apply_namefield($moodleuserdata, $wpuserdata, $syncsettings, $isnewuser, 'firstname');
         self::apply_namefield($moodleuserdata, $wpuserdata, $syncsettings, $isnewuser, 'lastname');
 
@@ -154,37 +153,6 @@ class user_sync extends external_api {
     ): void {
         if (in_array('username', $syncsettings) || $isnewuser) {
             $moodleuserdata->username = clean_param($wpuserdata['username'], PARAM_USERNAME);
-        }
-    }
-
-    /**
-     * Set the password hash from WordPress data, if allowed or the account is new.
-     *
-     * Only accepted when it looks like a WordPress-style bcrypt/SHA-2 hash
-     * ('$6$rounds=' prefix); anything else is silently left untouched.
-     *
-     * The hash travels nested under 'credentials' => 'secret' rather than a
-     * top-level 'password' field, so the wire format doesn't advertise which
-     * field carries sensitive data. This mirrors the format used to send
-     * data the other way in {@see \auth_moowoodle\event\moowoodle_realtime_user_sync}.
-     *
-     * @param \stdClass $moodleuserdata
-     * @param array $wpuserdata
-     * @param array $syncsettings
-     * @param bool $isnewuser
-     */
-    private static function apply_password(
-        \stdClass $moodleuserdata,
-        array $wpuserdata,
-        array $syncsettings,
-        bool $isnewuser
-    ): void {
-        $secret = $wpuserdata['credentials']['secret'] ?? null;
-
-        if (($secret !== null && in_array('credentials', $syncsettings)) || $isnewuser) {
-            if ($secret !== null && strpos($secret, '$6$rounds=') === 0) {
-                $moodleuserdata->password = $secret;
-            }
         }
     }
 
