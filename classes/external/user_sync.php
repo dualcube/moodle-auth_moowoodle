@@ -128,6 +128,7 @@ class user_sync extends external_api {
             user_update_user($moodleuserdata, false, false);
             $userid = $moodleuserdata->id;
         } else {
+            $moodleuserdata->auth = 'moowoodle';
             $userid = user_create_user($moodleuserdata, false, false);
             $response['created'] = true;
         }
