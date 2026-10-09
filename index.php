@@ -57,10 +57,7 @@ if ($passkey) {
     if ($timedif >= 0 && $timedif < get_config('auth_moowoodle', 'timelimit') * 60 && $userexist) {
         $user = get_complete_user_data('id', $requestdata['user_id']);
 
-        // Only accounts whose auth method is on the configured SSO allow-list may sign
-        // in this way (auth_moowoodle/ssoauthmethods, 'moowoodle' only by default);
-        // suspended accounts, site administrators and disabled auth methods are
-        // always refused regardless of that setting.
+        // Each clause blocks a distinct way to sign in an account that shouldn't.
         $ssoauthmethods = \auth_moowoodle\local\settings_handler::get_sso_auth_methods();
 
         if (

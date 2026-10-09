@@ -308,12 +308,7 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-      # Moodle's ZIP installer (core\update\validator) requires the archive's single
-      # root directory to be exactly the plugin's bare name - "moowoodle", the part
-      # of the frankenstyle component (auth_moowoodle) after the plugin type. That is
-      # NOT the same as $PLUGIN_SLUG (the repo name with "moodle-" stripped, which is
-      # "auth_moowoodle"): zipping $PLUGIN_SLUG as-is produces a rootdirinvalid error
-      # and the exclude.lst entries (already written as "moowoodle/...") never match.
+      # The ZIP root must be the bare plugin name ("moowoodle"), not $PLUGIN_SLUG.
       - name: Determine release plugin name
         working-directory: ${{ env.PLUGIN_SLUG }}
         run: |

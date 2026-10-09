@@ -82,8 +82,6 @@ if ($ADMIN->fulltree) {
         )
     );
 
-    // Which accounts the WordPress SSO link may sign in, by authentication method.
-    // Defaults to this plugin's own method only - see \auth_moowoodle\local\settings_handler::get_sso_auth_methods().
     // Also editable from the setup wizard's WordPress Site step.
     $settings->add(
         new admin_setting_configmultiselect(
