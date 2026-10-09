@@ -60,7 +60,8 @@ if ($passkey) {
         // Only accounts provisioned for this plugin's auth method may sign in via SSO;
         // suspended accounts, site administrators and other auth methods are refused.
         if (
-            !$user || !empty($user->suspended) || !is_enabled_auth($user->auth) || is_siteadmin($user)
+            !$user || !empty($user->suspended) || $user->auth === 'nologin' || $user->auth !== 'moowoodle'
+                || !is_enabled_auth($user->auth) || is_siteadmin($user)
         ) {
             throw new moodle_exception('ssounauthorized', 'auth_moowoodle');
         }

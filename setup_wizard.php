@@ -171,7 +171,20 @@ switch ($step) {
         // Token list can be refreshed for it when the dropdown change reloads the page.
         $rawserviceid = optional_param('serviceid', '', PARAM_RAW);
         $viewserviceid = $rawserviceid !== '' ? (int) $rawserviceid : (int) get_config('auth_moowoodle', 'webservice_id');
-        $tokens = settings_handler::get_tokens_for_service($viewserviceid);
+
+        // Preserve the admin's in-progress "Select user" choice across a reload triggered by
+        // changing the service dropdown, instead of resetting it back to the default each time.
+        $rawuserid = optional_param('userid', 0, PARAM_INT);
+        if ($rawuserid && array_key_exists($rawuserid, $users)) {
+            $selecteduserid = $rawuserid;
+        } else {
+            $selecteduserid = array_key_exists((int) $USER->id, $users) ? (int) $USER->id : (int) array_key_first($users);
+        }
+
+        // Only the selected user's own token is ever shown here - never every user's
+        // token for the service (that would hand out other users', including other
+        // admins', access tokens to anyone who can reach this page).
+        $tokens = settings_handler::get_token_for_user($viewserviceid, $selecteduserid);
 
         $form = new webservice_form($pageurl, [
             'services' => $services,
@@ -184,7 +197,6 @@ switch ($step) {
         // clicked. A plain dropdown-change reload (see the JS above) posts the form
         // without any submit button's name/value, so it never reaches this branch.
         $realsubmit = optional_param('updateservice', '', PARAM_RAW) !== '';
-        $justcreated = false;
         $notification = '';
 
         if ($realsubmit && ($data = $form->get_data())) {
@@ -204,14 +216,13 @@ switch ($step) {
             if ($result['success']) {
                 setup_wizard::mark_step_complete($step);
 
-                $justcreated = true;
-                $createduserid = (int) $data->userid;
+                $selecteduserid = (int) $data->userid;
 
                 // Refresh the service/token lists and rebuild the form in place, instead of
                 // redirecting, so the newly created service and token show up immediately.
                 $viewserviceid = (int) $result['serviceid'];
                 $services = settings_handler::get_existing_services();
-                $tokens = settings_handler::get_tokens_for_service($viewserviceid);
+                $tokens = settings_handler::get_token_for_user($viewserviceid, $selecteduserid);
 
                 // Discard the just-processed submission before rebuilding the form: once a
                 // moodleform detects it was submitted, it renders those posted values (e.g.
@@ -226,19 +237,6 @@ switch ($step) {
                     'tokens' => $tokens,
                     'existingservice' => true,
                 ]);
-            }
-        }
-
-        // Preserve the admin's in-progress "Select user" choice across a reload triggered by
-        // changing the service dropdown, instead of resetting it back to the default each time.
-        if ($justcreated) {
-            $selecteduserid = $createduserid;
-        } else {
-            $rawuserid = optional_param('userid', 0, PARAM_INT);
-            if ($rawuserid && array_key_exists($rawuserid, $users)) {
-                $selecteduserid = $rawuserid;
-            } else {
-                $selecteduserid = array_key_exists((int) $USER->id, $users) ? (int) $USER->id : (int) array_key_first($users);
             }
         }
 

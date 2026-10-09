@@ -211,31 +211,21 @@ class settings_handler {
     }
 
     /**
-     * Tokens issued for the given service, keyed by the token string itself.
+     * The given user's own token for the given service, as a single-entry options
+     * list keyed by the token string itself - never any other user's token.
      *
      * @param int $serviceid
+     * @param int $userid
      * @return string[]
      */
-    public static function get_tokens_for_service(int $serviceid): array {
-        global $DB;
-
-        if ($serviceid <= 0) {
+    public static function get_token_for_user(int $serviceid, int $userid): array {
+        if ($serviceid <= 0 || $userid <= 0) {
             return [];
         }
 
-        $tokens = $DB->get_records(
-            'external_tokens',
-            ['externalserviceid' => $serviceid, 'tokentype' => EXTERNAL_TOKEN_PERMANENT],
-            'id ASC'
-        );
+        $token = self::get_existing_token($serviceid, $userid);
 
-        $options = [];
-
-        foreach ($tokens as $token) {
-            $options[$token->token] = $token->token;
-        }
-
-        return $options;
+        return $token ? [$token->token => $token->token] : [];
     }
 
     /**
