@@ -56,15 +56,10 @@ $PAGE->set_url($pageurl);
 $PAGE->set_title(get_string('setupwizard', 'auth_moowoodle'));
 $PAGE->set_heading(get_string('setupwizard', 'auth_moowoodle'));
 
-// Small "Copy" button behaviour for the read-only site URL / token fields. Safe to
-// load on every step: it's a single delegated click listener, and does nothing unless
-// a ".auth-moowoodle-copy" button is actually present on the page.
+// Safe on every step: a no-op unless a ".auth-moowoodle-copy" button is present.
 $PAGE->requires->js_call_amd('auth_moowoodle/setup_wizard', 'initCopyButtons');
 
-// Refresh the Web Service step's Token list when the service or user dropdown changes,
-// via a small JSON fetch, instead of reloading the page. No page navigation means no
-// "leave this page?" prompt from Moodle's unsaved-changes warning, and the "Name for
-// the Web Service" field's own show/hide already happens client-side via hideIf().
+// Refreshes the Token list via a JSON fetch instead of reloading the page.
 if ($step === 'webservice') {
     $ajaxurl = (new moodle_url('/auth/moowoodle/wizard_ajax.php'))->out(false);
     $PAGE->requires->js_call_amd('auth_moowoodle/setup_wizard', 'initWebserviceStep', [$ajaxurl]);
@@ -121,7 +116,8 @@ switch ($step) {
         break;
 
     case 'connection':
-        $form = new connection_form($pageurl);
+        $authmethods = settings_handler::get_auth_method_choices();
+        $form = new connection_form($pageurl, ['authmethods' => $authmethods]);
         $notification = '';
 
         if ($data = $form->get_data()) {
@@ -131,6 +127,17 @@ switch ($step) {
             set_config('encryptkey', trim($data->encryptkey), 'auth_moowoodle');
             set_config('timelimit', (int) $data->timelimit, 'auth_moowoodle');
 
+            // Only methods the admin explicitly checked are allowed through SSO.
+            $selectedauth = [];
+
+            foreach (array_keys($authmethods) as $authmethod) {
+                if (!empty($data->{'ssoauth_' . $authmethod})) {
+                    $selectedauth[] = $authmethod;
+                }
+            }
+
+            set_config('ssoauthmethods', implode(',', $selectedauth), 'auth_moowoodle');
+
             if (!empty($data->testconnection)) {
                 $result = settings_handler::test_connection($wpsiteurl);
                 $notification = $OUTPUT->notification($result['message'], $result['success'] ? 'success' : 'warning');
@@ -139,14 +146,20 @@ switch ($step) {
                 redirect(new moodle_url('/auth/moowoodle/setup_wizard.php', ['step' => setup_wizard::get_next_step($step)]));
             }
         } else {
-            // Leave both fields blank when nothing has been configured yet - neither
-            // should ever show a converted falsy value or an auto-generated value the
-            // admin didn't ask for. An existing saved value is always preserved.
-            $form->set_data((object) [
+            // Blank when unset, never an auto-generated or converted-falsy value.
+            $defaults = [
                 'wpsiteurl' => get_config('auth_moowoodle', 'wpsiteurl') ?: '',
                 'encryptkey' => get_config('auth_moowoodle', 'encryptkey') ?: '',
                 'timelimit' => get_config('auth_moowoodle', 'timelimit') ?: 60,
-            ]);
+            ];
+
+            $enabledauth = settings_handler::get_sso_auth_methods();
+
+            foreach (array_keys($authmethods) as $authmethod) {
+                $defaults['ssoauth_' . $authmethod] = in_array($authmethod, $enabledauth, true) ? 1 : 0;
+            }
+
+            $form->set_data((object) $defaults);
         }
 
         $content = $OUTPUT->render_from_template('auth_moowoodle/step', [
@@ -167,11 +180,20 @@ switch ($step) {
             $users = [$USER->id => $USER->email];
         }
 
-        // The service currently selected in the dropdown (possibly not yet saved), so the
-        // Token list can be refreshed for it when the dropdown change reloads the page.
+        // The service currently selected in the dropdown, possibly not yet saved.
         $rawserviceid = optional_param('serviceid', '', PARAM_RAW);
         $viewserviceid = $rawserviceid !== '' ? (int) $rawserviceid : (int) get_config('auth_moowoodle', 'webservice_id');
-        $tokens = settings_handler::get_tokens_for_service($viewserviceid);
+
+        // Preserve the admin's in-progress "Select user" choice across a reload.
+        $rawuserid = optional_param('userid', 0, PARAM_INT);
+        if ($rawuserid && array_key_exists($rawuserid, $users)) {
+            $selecteduserid = $rawuserid;
+        } else {
+            $selecteduserid = array_key_exists((int) $USER->id, $users) ? (int) $USER->id : (int) array_key_first($users);
+        }
+
+        // Only the selected user's own token - never every token of the service.
+        $tokens = settings_handler::get_token_for_user($viewserviceid, $selecteduserid);
 
         $form = new webservice_form($pageurl, [
             'services' => $services,
@@ -180,19 +202,12 @@ switch ($step) {
             'existingservice' => (bool) $viewserviceid,
         ]);
 
-        // Only treat this as a real create/update when the actual submit button was
-        // clicked. A plain dropdown-change reload (see the JS above) posts the form
-        // without any submit button's name/value, so it never reaches this branch.
+        // A dropdown-change reload posts no submit button, so it's skipped here.
         $realsubmit = optional_param('updateservice', '', PARAM_RAW) !== '';
-        $justcreated = false;
         $notification = '';
 
         if ($realsubmit && ($data = $form->get_data())) {
-            // Optional functions (beyond the two this plugin always needs) are granted
-            // only via the explicit, per-function opt-in on the Synchronization step -
-            // never automatically here. A brand new service starts with just the
-            // mandatory functions; get_enabled_sync_functions() already returns those
-            // (plus whatever the admin has separately opted into) when applied below.
+            // Optional functions are granted only via the Synchronization step.
             $result = settings_handler::create_or_update_service(
                 (int) $data->serviceid,
                 (int) $data->userid,
@@ -204,20 +219,14 @@ switch ($step) {
             if ($result['success']) {
                 setup_wizard::mark_step_complete($step);
 
-                $justcreated = true;
-                $createduserid = (int) $data->userid;
+                $selecteduserid = (int) $data->userid;
 
-                // Refresh the service/token lists and rebuild the form in place, instead of
-                // redirecting, so the newly created service and token show up immediately.
+                // Rebuild the form in place so the new service/token show up immediately.
                 $viewserviceid = (int) $result['serviceid'];
                 $services = settings_handler::get_existing_services();
-                $tokens = settings_handler::get_tokens_for_service($viewserviceid);
+                $tokens = settings_handler::get_token_for_user($viewserviceid, $selecteduserid);
 
-                // Discard the just-processed submission before rebuilding the form: once a
-                // moodleform detects it was submitted, it renders those posted values (e.g.
-                // serviceid "0" for "create new") instead of the set_data() defaults below,
-                // which would otherwise leave the dropdown stuck on "Create new web service"
-                // instead of switching to the service that was just created.
+                // Discard the submission so set_data() below drives the rebuilt form.
                 $_POST = [];
 
                 $form = new webservice_form($pageurl, [
@@ -226,19 +235,6 @@ switch ($step) {
                     'tokens' => $tokens,
                     'existingservice' => true,
                 ]);
-            }
-        }
-
-        // Preserve the admin's in-progress "Select user" choice across a reload triggered by
-        // changing the service dropdown, instead of resetting it back to the default each time.
-        if ($justcreated) {
-            $selecteduserid = $createduserid;
-        } else {
-            $rawuserid = optional_param('userid', 0, PARAM_INT);
-            if ($rawuserid && array_key_exists($rawuserid, $users)) {
-                $selecteduserid = $rawuserid;
-            } else {
-                $selecteduserid = array_key_exists((int) $USER->id, $users) ? (int) $USER->id : (int) array_key_first($users);
             }
         }
 
@@ -284,9 +280,7 @@ switch ($step) {
         $notification = '';
 
         if ($data = $form->get_data()) {
-            // Only functions the admin explicitly checked are granted - nothing here
-            // is selected by default, and unchecking a box does not by itself revoke
-            // access already granted (see synchronization_intro).
+            // Only functions the admin explicitly checked are granted.
             $selected = [];
 
             foreach (array_merge($readonlyfunctions, $mutatingfunctions) as $functionname) {
@@ -313,8 +307,7 @@ switch ($step) {
             $form->set_data((object) $defaults);
         }
 
-        // Purely informational - the two functions this plugin always needs are never
-        // shown as checkboxes above, so make it clear why they're missing from the list.
+        // Purely informational; the two required functions aren't in the list above.
         $requirednote = $OUTPUT->notification(
             get_string('synchronization_requirednote_heading', 'auth_moowoodle') . html_writer::alist([
                 get_string('synchronization_requiredfunction_get_users', 'auth_moowoodle'),

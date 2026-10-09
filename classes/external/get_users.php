@@ -104,9 +104,7 @@ class get_users extends external_api {
             ? $DB->get_records_sql($sql, $sqlparams)
             : $DB->get_records_sql($sql, $sqlparams, 0, $limit);
 
-        // Explicitly allow-list the exported fields, rather than passing the
-        // DB row straight through, so nothing beyond these fields can ever
-        // leak through this endpoint. Password hashes are never exported.
+        // Allow-list the exported fields; password hashes are never exported.
         $users = [];
         foreach ($records as $record) {
             $user = [

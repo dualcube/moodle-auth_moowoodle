@@ -57,10 +57,13 @@ if ($passkey) {
     if ($timedif >= 0 && $timedif < get_config('auth_moowoodle', 'timelimit') * 60 && $userexist) {
         $user = get_complete_user_data('id', $requestdata['user_id']);
 
-        // Only accounts provisioned for this plugin's auth method may sign in via SSO;
-        // suspended accounts, site administrators and other auth methods are refused.
+        // Each clause blocks a distinct way to sign in an account that shouldn't.
+        $ssoauthmethods = \auth_moowoodle\local\settings_handler::get_sso_auth_methods();
+
         if (
-            !$user || !empty($user->suspended) || !is_enabled_auth($user->auth) || is_siteadmin($user)
+            !$user || !empty($user->suspended) || $user->auth === 'nologin'
+                || !in_array($user->auth, $ssoauthmethods, true)
+                || !is_enabled_auth($user->auth) || is_siteadmin($user)
         ) {
             throw new moodle_exception('ssounauthorized', 'auth_moowoodle');
         }

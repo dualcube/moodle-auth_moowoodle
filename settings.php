@@ -82,6 +82,17 @@ if ($ADMIN->fulltree) {
         )
     );
 
+    // Also editable from the setup wizard's WordPress Site step.
+    $settings->add(
+        new admin_setting_configmultiselect(
+            'auth_moowoodle/ssoauthmethods',
+            get_string('ssoauthmethods', 'auth_moowoodle'),
+            get_string('ssoauthmethods_desc', 'auth_moowoodle'),
+            ['moowoodle'],
+            \auth_moowoodle\local\settings_handler::get_auth_method_choices()
+        )
+    );
+
     // Web service / token status, kept in sync with what the setup wizard creates.
     $service = \auth_moowoodle\local\settings_handler::get_existing_service();
 

@@ -70,6 +70,39 @@ class settings_handler {
     ];
 
     /**
+     * Authentication methods an account is allowed to use and still sign in through
+     * the WordPress SSO link, as configured via auth_moowoodle/ssoauthmethods.
+     *
+     * Falls back to this plugin's own method only, both when the setting has never
+     * been saved and if an admin empties it out entirely - SSO should never become
+     * wide open to every auth method just because the setting is blank.
+     *
+     * @return string[]
+     */
+    public static function get_sso_auth_methods(): array {
+        $configured = get_config('auth_moowoodle', 'ssoauthmethods');
+        $methods = $configured ? array_filter(explode(',', $configured)) : [];
+
+        return $methods ?: ['moowoodle'];
+    }
+
+    /**
+     * Every installed authentication method, keyed by shortname and valued with its
+     * display name - the selectable choices for auth_moowoodle/ssoauthmethods.
+     *
+     * @return string[]
+     */
+    public static function get_auth_method_choices(): array {
+        $choices = [];
+
+        foreach (\core_component::get_plugin_list('auth') as $authmethod => $notused) {
+            $choices[$authmethod] = get_string('pluginname', "auth_$authmethod");
+        }
+
+        return $choices;
+    }
+
+    /**
      * Check the server prerequisites the WordPress connection relies on.
      *
      * @return array List of checks, each with name, met (bool), settingsurl and description.
@@ -211,31 +244,21 @@ class settings_handler {
     }
 
     /**
-     * Tokens issued for the given service, keyed by the token string itself.
+     * The given user's own token for the given service, as a single-entry options
+     * list keyed by the token string itself - never any other user's token.
      *
      * @param int $serviceid
+     * @param int $userid
      * @return string[]
      */
-    public static function get_tokens_for_service(int $serviceid): array {
-        global $DB;
-
-        if ($serviceid <= 0) {
+    public static function get_token_for_user(int $serviceid, int $userid): array {
+        if ($serviceid <= 0 || $userid <= 0) {
             return [];
         }
 
-        $tokens = $DB->get_records(
-            'external_tokens',
-            ['externalserviceid' => $serviceid, 'tokentype' => EXTERNAL_TOKEN_PERMANENT],
-            'id ASC'
-        );
+        $token = self::get_existing_token($serviceid, $userid);
 
-        $options = [];
-
-        foreach ($tokens as $token) {
-            $options[$token->token] = $token->token;
-        }
-
-        return $options;
+        return $token ? [$token->token => $token->token] : [];
     }
 
     /**

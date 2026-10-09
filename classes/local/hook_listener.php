@@ -72,10 +72,7 @@ class hook_listener {
     private static function should_skip_setup_wizard_prompt(): bool {
         global $CFG;
 
-        // Unlike the legacy <component>_after_config() callback convention (which
-        // get_plugins_with_function() itself refuses to invoke this early), a hook
-        // registered in db/hooks.php has no such built-in guard - so this must run,
-        // and must come, before anything below touches the database.
+        // Hooks give no guard against running before the DB is ready.
         if (self::is_non_interactive_request()) {
             return true;
         }
