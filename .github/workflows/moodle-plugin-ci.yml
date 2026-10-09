@@ -308,15 +308,36 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
+      # Moodle's ZIP installer (core\update\validator) requires the archive's single
+      # root directory to be exactly the plugin's bare name - "moowoodle", the part
+      # of the frankenstyle component (auth_moowoodle) after the plugin type. That is
+      # NOT the same as $PLUGIN_SLUG (the repo name with "moodle-" stripped, which is
+      # "auth_moowoodle"): zipping $PLUGIN_SLUG as-is produces a rootdirinvalid error
+      # and the exclude.lst entries (already written as "moowoodle/...") never match.
+      - name: Determine release plugin name
+        working-directory: ${{ env.PLUGIN_SLUG }}
+        run: |
+          COMPONENT=$(sed -n "s/^[[:space:]]*\$plugin->component[[:space:]]*=[[:space:]]*'\([^']*\)'[[:space:]]*;.*/\1/p" version.php | head -n 1)
+
+          if [ -z "$COMPONENT" ]; then
+            echo "ERROR: Could not determine plugin component from version.php"
+            exit 1
+          fi
+
+          # Strip the leading "<type>_" (e.g. "auth_") to get the bare plugin name
+          # Moodle expects as the ZIP's root directory.
+          echo "PLUGIN_NAME=${COMPONENT#*_}" >> "$GITHUB_ENV"
+
       - name: Prepare Release Folder
         run: |
           rm -rf "$PLUGIN_SLUG/.git"
+          mv "$PLUGIN_SLUG" "$PLUGIN_NAME"
           mkdir -p release
 
       - name: Verify exclude list
         run: |
-          if [ ! -f "$PLUGIN_SLUG/exclude.lst" ]; then
-            echo "ERROR: $PLUGIN_SLUG/exclude.lst not found"
+          if [ ! -f "$PLUGIN_NAME/exclude.lst" ]; then
+            echo "ERROR: $PLUGIN_NAME/exclude.lst not found"
             exit 1
           fi
 
@@ -324,7 +345,7 @@ jobs:
       # plugin's authoritative version - it's bumped on every real release.
       - name: Get version from version.php
         id: version
-        working-directory: ${{ env.PLUGIN_SLUG }}
+        working-directory: ${{ env.PLUGIN_NAME }}
         run: |
           VERSION=$(sed -n 's/^[[:space:]]*\$plugin->version[[:space:]]*=[[:space:]]*\([0-9]\+\)[[:space:]]*;.*/\1/p' version.php | head -n 1)
 
@@ -338,20 +359,28 @@ jobs:
 
       - name: Build ZIP
         run: |
-          zip -r "release/$PLUGIN_SLUG.zip" "$PLUGIN_SLUG" \
-            -x@"$PLUGIN_SLUG/exclude.lst"
+          zip -r "release/$PLUGIN_NAME.zip" "$PLUGIN_NAME" \
+            -x@"$PLUGIN_NAME/exclude.lst"
 
       # Guards against a bad exclude.lst silently shipping a broken or empty
-      # zip: confirms the archive itself isn't corrupt, and that the plugin's
-      # own version.php - the file Moodle reads to identify and install it -
-      # actually made it in at the expected component path.
+      # zip: confirms the archive isn't corrupt, that its single root directory
+      # is exactly the plugin name Moodle requires, and that the plugin's own
+      # version.php - the file Moodle reads to identify and install it - made
+      # it in at the expected path.
       - name: Verify Release ZIP
         run: |
-          ZIP="release/$PLUGIN_SLUG.zip"
+          ZIP="release/$PLUGIN_NAME.zip"
 
           unzip -t "$ZIP"
 
-          unzip -l "$ZIP" | grep -q "$PLUGIN_SLUG/version.php" || {
+          BADROOT=$(unzip -Z1 "$ZIP" | grep -v "^$PLUGIN_NAME/" || true)
+          if [ -n "$BADROOT" ]; then
+            echo "ERROR: ZIP contains entries outside the $PLUGIN_NAME/ root:"
+            echo "$BADROOT"
+            exit 1
+          fi
+
+          unzip -l "$ZIP" | grep -q "$PLUGIN_NAME/version.php" || {
             echo "ERROR: version.php missing from release ZIP"
             exit 1
           }
@@ -374,7 +403,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ steps.version.outputs.version }}
-          files: release/${{ env.PLUGIN_SLUG }}.zip
+          files: release/${{ env.PLUGIN_NAME }}.zip
           body: |
             We're pleased to announce the official release of MooWoodle Connect for Moodle v${{ steps.version.outputs.version }}.
 

@@ -70,6 +70,23 @@ class settings_handler {
     ];
 
     /**
+     * Authentication methods an account is allowed to use and still sign in through
+     * the WordPress SSO link, as configured via auth_moowoodle/ssoauthmethods.
+     *
+     * Falls back to this plugin's own method only, both when the setting has never
+     * been saved and if an admin empties it out entirely - SSO should never become
+     * wide open to every auth method just because the setting is blank.
+     *
+     * @return string[]
+     */
+    public static function get_sso_auth_methods(): array {
+        $configured = get_config('auth_moowoodle', 'ssoauthmethods');
+        $methods = $configured ? array_filter(explode(',', $configured)) : [];
+
+        return $methods ?: ['moowoodle'];
+    }
+
+    /**
      * Check the server prerequisites the WordPress connection relies on.
      *
      * @return array List of checks, each with name, met (bool), settingsurl and description.
