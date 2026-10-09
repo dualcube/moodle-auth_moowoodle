@@ -121,7 +121,8 @@ switch ($step) {
         break;
 
     case 'connection':
-        $form = new connection_form($pageurl);
+        $authmethods = settings_handler::get_auth_method_choices();
+        $form = new connection_form($pageurl, ['authmethods' => $authmethods]);
         $notification = '';
 
         if ($data = $form->get_data()) {
@@ -130,6 +131,19 @@ switch ($step) {
             set_config('wpsiteurl', $wpsiteurl, 'auth_moowoodle');
             set_config('encryptkey', trim($data->encryptkey), 'auth_moowoodle');
             set_config('timelimit', (int) $data->timelimit, 'auth_moowoodle');
+
+            // Only methods the admin explicitly checked are allowed through SSO -
+            // see settings_handler::get_sso_auth_methods() for the off-by-default
+            // fallback when none are checked.
+            $selectedauth = [];
+
+            foreach (array_keys($authmethods) as $authmethod) {
+                if (!empty($data->{'ssoauth_' . $authmethod})) {
+                    $selectedauth[] = $authmethod;
+                }
+            }
+
+            set_config('ssoauthmethods', implode(',', $selectedauth), 'auth_moowoodle');
 
             if (!empty($data->testconnection)) {
                 $result = settings_handler::test_connection($wpsiteurl);
@@ -142,11 +156,19 @@ switch ($step) {
             // Leave both fields blank when nothing has been configured yet - neither
             // should ever show a converted falsy value or an auto-generated value the
             // admin didn't ask for. An existing saved value is always preserved.
-            $form->set_data((object) [
+            $defaults = [
                 'wpsiteurl' => get_config('auth_moowoodle', 'wpsiteurl') ?: '',
                 'encryptkey' => get_config('auth_moowoodle', 'encryptkey') ?: '',
                 'timelimit' => get_config('auth_moowoodle', 'timelimit') ?: 60,
-            ]);
+            ];
+
+            $enabledauth = settings_handler::get_sso_auth_methods();
+
+            foreach (array_keys($authmethods) as $authmethod) {
+                $defaults['ssoauth_' . $authmethod] = in_array($authmethod, $enabledauth, true) ? 1 : 0;
+            }
+
+            $form->set_data((object) $defaults);
         }
 
         $content = $OUTPUT->render_from_template('auth_moowoodle/step', [

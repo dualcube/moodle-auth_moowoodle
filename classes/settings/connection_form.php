@@ -57,6 +57,17 @@ class connection_form extends moodleform {
         $mform->setDefault('timelimit', 60);
         $mform->addHelpButton('timelimit', 'timelimit', 'auth_moowoodle');
 
+        $authmethods = $this->_customdata['authmethods'] ?? [];
+
+        $mform->addElement('header', 'ssoauthmethodsheader', get_string('ssoauthmethods', 'auth_moowoodle'));
+        $mform->setExpanded('ssoauthmethodsheader');
+        $mform->addElement('static', 'ssoauthmethods_desc', '', get_string('ssoauthmethods_desc', 'auth_moowoodle'));
+
+        foreach ($authmethods as $authmethod => $displayname) {
+            $mform->addElement('advcheckbox', 'ssoauth_' . $authmethod, '', $displayname);
+            $mform->setDefault('ssoauth_' . $authmethod, 0);
+        }
+
         $buttonarray = [
             $mform->createElement('submit', 'testconnection', get_string('testconnection', 'auth_moowoodle')),
             $mform->createElement('submit', 'saveandcontinue', get_string('saveandcontinue', 'auth_moowoodle')),

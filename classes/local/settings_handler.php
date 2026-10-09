@@ -87,6 +87,22 @@ class settings_handler {
     }
 
     /**
+     * Every installed authentication method, keyed by shortname and valued with its
+     * display name - the selectable choices for auth_moowoodle/ssoauthmethods.
+     *
+     * @return string[]
+     */
+    public static function get_auth_method_choices(): array {
+        $choices = [];
+
+        foreach (\core_component::get_plugin_list('auth') as $authmethod => $notused) {
+            $choices[$authmethod] = get_string('pluginname', "auth_$authmethod");
+        }
+
+        return $choices;
+    }
+
+    /**
      * Check the server prerequisites the WordPress connection relies on.
      *
      * @return array List of checks, each with name, met (bool), settingsurl and description.

@@ -84,19 +84,14 @@ if ($ADMIN->fulltree) {
 
     // Which accounts the WordPress SSO link may sign in, by authentication method.
     // Defaults to this plugin's own method only - see \auth_moowoodle\local\settings_handler::get_sso_auth_methods().
-    $authchoices = [];
-
-    foreach (\core_component::get_plugin_list('auth') as $authmethod => $notused) {
-        $authchoices[$authmethod] = get_string('pluginname', "auth_$authmethod");
-    }
-
+    // Also editable from the setup wizard's WordPress Site step.
     $settings->add(
         new admin_setting_configmultiselect(
             'auth_moowoodle/ssoauthmethods',
             get_string('ssoauthmethods', 'auth_moowoodle'),
             get_string('ssoauthmethods_desc', 'auth_moowoodle'),
             ['moowoodle'],
-            $authchoices
+            \auth_moowoodle\local\settings_handler::get_auth_method_choices()
         )
     );
 
