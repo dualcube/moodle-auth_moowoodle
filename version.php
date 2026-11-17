@@ -25,10 +25,10 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2026100900;
+$plugin->version = 2026111700;
 $plugin->requires = 2025041400;
 // Tested against Moodle 5.0 through 5.3, including the 5.3dev branch (branches 500-530).
 $plugin->supported = [450, 500, 530];
 $plugin->component = 'auth_moowoodle';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '1.1.4 (Build: 2026100900)';
+$plugin->release = '1.1.5 (Build: 2026111700)';
